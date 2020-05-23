@@ -25,16 +25,14 @@ app.get("/", (request, response) => {
 
 
 let list
-let deviceList
 let sensorList
  
-// send the default array of dreams to the webpage
 app.get("/devices", (request, response) => {
     // express helps us take JS objects and send them as JSON
     client.devices.list().then(devices => {
-        list = devices
+        console.log('devices', devices.length)
+        response.json(devices);
     });
-    response.json(list);
 });
 
 // listen for requests :)

@@ -1,10 +1,7 @@
 // define variables that reference elements on our page
 const deviceList = document.getElementById("devices");
-const addBootAlert = document.getElementById("add-boot-alert");
-
-addBootAlert.append(`<div class="alert alert-danger" role="alert">
-A simple danger alert—check it out!
-</div>`);
+const mainContainer = document.getElementById("main-container");
+const mainRow = document.getElementById("main-row");
 
 // a helper function that creates a list item for a given dream
 function appendNewDevice(device) {
@@ -13,14 +10,21 @@ function appendNewDevice(device) {
     deviceList.appendChild(newListItem); 
 }
 
+function showDevices(devices) {
+    let html = '';
+    console.log('showDevices')
+    devices.forEach(device => {
+        html += `<div class="col deviceCell">${device.label}</div>`;
+    })
+    console.log('html', html)
+    mainRow.innerHTML = html;
+}
+
 // fetch the initial list of dreams
 fetch("/devices")
     .then(response => response.json()) // parse the JSON from the server
     .then(devices => {
-        // remove the loading text
+        console.log('/devices returned')
         deviceList.firstElementChild.remove();
-
-        // iterate through every device and add it to our page
-        devices.forEach(appendNewDevice);
-
+        showDevices(devices)
     });
