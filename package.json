@@ -4,7 +4,8 @@
   "description": "Try using the new Smart Things javascript SDK",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "watch": "nodemon server.js"
   },
   "engines": {
     "node": "12.x"
@@ -14,5 +15,8 @@
   "dependencies": {
     "@smartthings/core-sdk": "^0.2.11",
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.4"
   }
 }

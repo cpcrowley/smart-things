@@ -1,11 +1,11 @@
 const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk');
 
-var listOfAllDevices = null;
+exports.listOfAllDevices = [];
 var client = null;
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function listOfContactSensors() {
+exports.listOfContactSensors = async () => {
     let sensorList = [];
     listOfAllDevices.forEach(device => {
         let components = device.components;
@@ -23,7 +23,7 @@ async function listOfContactSensors() {
 }
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function checkDoorsAndWindows() {
+exports.checkDoorsAndWindows = async () => {
     let sensorList = await listOfContactSensors();
     console.log(`---------------Found ${sensorList.length} contact sensors`);
     sensorList.forEach(async device => {
@@ -36,33 +36,36 @@ async function checkDoorsAndWindows() {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function init() {
+fetchData = async (client) => {
+    return await client.devices.list()
+}
+exports.fetchData = fetchData
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+exports.init = async () => {
     client = new SmartThingsClient(
         new BearerTokenAuthenticator('d2856d93-cb36-46e2-a49f-c9a4b4b166e9'));
     listOfAllDevices = await fetchData(client);
+    return listOfAllDevices
 }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function getLocations() {
+exports.getLocations = async () => {
     return await client.locations.list();
 }
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-async function fetchData(client) {
-    return await client.devices.list()
-}
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-function deviceFromLabel(label, allDevices) {
+exports.deviceFromLabel = (label, allDevices) => {
     return allDevices.find(device => device.label == label);
 }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-function lampCommand(command) {
+exports.lampCommand = (command) => {
     return {
         component: 'main',
         capability: 'switch',
@@ -70,9 +73,15 @@ function lampCommand(command) {
     };
 }
 
+exports.listDeviceLabels = (deviceList) => {
+    let list = [];
+    deviceList.forEach(device => list.push(device.label))
+    return list;
+}
+
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function turnBackLampOffAndOn() {
+exports.turnBackLampOffAndOn = async () => {
     let lampBackInfo = deviceFromLabel('Lamp Back', listOfAllDevices);
     let lampBackId = lampBackInfo.deviceId;
     console.log('Turn lamp off');
@@ -83,14 +92,5 @@ async function turnBackLampOffAndOn() {
         client.devices.executeCommand(lampBackId, lampCommand('on'));
     }, 1000);
 }
-
-exports.getLocations = getLocations;
-exports.deviceFromLabel = deviceFromLabel;
-exports.lampCommand = lampCommand;
-exports.fetchData = fetchData;
-exports.turnBackLampOffAndOn = turnBackLampOffAndOn;
-exports.init = init;
-exports.allDevices = listOfAllDevices;
-exports.checkDoorsAndWindows = checkDoorsAndWindows;
 
 

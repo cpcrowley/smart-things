@@ -1,17 +1,16 @@
-// client-side js, loaded by index.html
-// run by the browser each time the page is loaded
-
-console.log("hello world :o");
-
 // define variables that reference elements on our page
 const deviceList = document.getElementById("devices");
+const addBootAlert = document.getElementById("add-boot-alert");
 
+addBootAlert.append(`<div class="alert alert-danger" role="alert">
+A simple danger alert—check it out!
+</div>`);
 
 // a helper function that creates a list item for a given dream
 function appendNewDevice(device) {
-    const newListItem = document.createElement("li");
+    const newListItem = document.createElement("span");
     newListItem.innerText = device.label;
-    deviceList.appendChild(newListItem);
+    deviceList.appendChild(newListItem); 
 }
 
 // fetch the initial list of dreams

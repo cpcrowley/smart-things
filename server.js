@@ -1,5 +1,6 @@
 // server.js
 // where your node app starts
+const lib = require('./lib.js');
 
 // we've started you off with Express (https://expressjs.com/)
 // but feel free to use whatever libraries or frameworks you'd like through `package.json`.
@@ -22,8 +23,11 @@ app.get("/", (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
 });
 
-let list
 
+let list
+let deviceList
+let sensorList
+ 
 // send the default array of dreams to the webpage
 app.get("/devices", (request, response) => {
     // express helps us take JS objects and send them as JSON
@@ -36,4 +40,15 @@ app.get("/devices", (request, response) => {
 // listen for requests :)
 const listener = app.listen(PORT, () => {
     console.log("Your app is listening on port " + listener.address().port);
+    lib.init()
+        .then(result => {
+            console.log('lib.init finished result.length:', result.length)
+            deviceList = result
+            lib.listOfContactSensors().then(list => {
+                sensorList = list;
+                //console.log('sensorListLabels:', lib.listDeviceLabels(sensorList))
+                console.log('sensorList.length:', sensorList.length)
+
+            })
+        })
 });
