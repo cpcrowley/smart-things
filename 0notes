@@ -1,0 +1,10 @@
+* Smart things in node, or the web
+The SmartThings Core SDK is a wrapper designed to simplify the use of the SmartThings REST API 6 from JavaScript and TypeScript applications. This is the very first release of this SDK and should be considered a work in progress. Changes may still be made that are not backwardly compatible.
+
+PAT:
+d2856d93-cb36-46e2-a49f-c9a4b4b166e9
+
+* Good article on ways to import things:
+https://www.sitepoint.com/understanding-module-exports-exports-node-js/
+
+

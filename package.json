@@ -1,0 +1,14 @@
+{
+  "name": "smartthingsdemo",
+  "version": "1.0.0",
+  "description": "Try using the new Smart Things javascript SDK",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@smartthings/core-sdk": "^0.2.11"
+  }
+}

@@ -1,0 +1,31 @@
+* SmartThings javascript interface
+Allows you to control smart things from a web app or a node app.
+cd /Users/cpcrowley/a/smartthings/javascript
+code /Users/cpcrowley/a/smartthings/javascript
+open -R /Users/cpcrowley/a/smartthings/javascript
+
+open -a "/Applications/Utilities/Terminal.app/Contents/MacOS/Terminal"
+
+alias inchrome='open -a "/Applications/Google Chrome.app"'
+
+* Github repo
+inchrome https://github.com/SmartThingsCommunity/smartthings-core-sdk
+
+* An earlier version? or examples?
+inchrome https://github.com/SmartThingsCommunity/smartapp-sdk-nodejs
+
+* Demos in "glitch"
+inchrome https://glitch.com/~coresdk-demo
+
+* Intro and video
+inchrome https://community.smartthings.com/t/smartthings-coresdk-javascript/194663
+
+* Smart Things community
+inchrome https://community.smartthings.com/
+
+* Smart Things Developer Workspace
+inchrome https://smartthings.developer.samsung.com/workspace/
+
+* Smart Things Developer documentation
+inchrome https://smartthings.developer.samsung.com/docs/index.html
+
