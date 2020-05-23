@@ -2,13 +2,17 @@
   "name": "smartthingsdemo",
   "version": "1.0.0",
   "description": "Try using the new Smart Things javascript SDK",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "12.x"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@smartthings/core-sdk": "^0.2.11"
+    "@smartthings/core-sdk": "^0.2.11",
+    "express": "^4.17.1"
   }
 }
