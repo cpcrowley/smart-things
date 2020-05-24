@@ -7,7 +7,14 @@
 .deviceCell {
     padding: 10px;
     border: 2px black solid;
+}
+
+.closed {
     background-color: pink;
+}
+
+.open {
+    background-color: lightgreen;
 }
 
 body {

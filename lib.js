@@ -1,11 +1,19 @@
 const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk');
 
-exports.listOfAllDevices = [];
 var client = null;
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-exports.listOfContactSensors = async () => {
+exports.init = async () => {
+    client = new SmartThingsClient(
+        new BearerTokenAuthenticator('d2856d93-cb36-46e2-a49f-c9a4b4b166e9'));
+    listOfAllDevices = await fetchData(client);
+    return listOfAllDevices
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+exports.listOfContactSensors = async (listOfAllDevices) => {
     let sensorList = [];
     listOfAllDevices.forEach(device => {
         let components = device.components;
@@ -23,15 +31,18 @@ exports.listOfContactSensors = async () => {
 }
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-exports.checkDoorsAndWindows = async () => {
-    let sensorList = await listOfContactSensors();
-    console.log(`---------------Found ${sensorList.length} contact sensors`);
-    sensorList.forEach(async device => {
+exports.checkDoorsAndWindows = async (sensorList) => {
+    console.log('checkDoorsAndWindows: enter');
+    let info = [];
+    for (let i = 0; i < sensorList.length; ++i) {
+        device = sensorList[i];
+        console.log('sensor: ' + device.label);
         let status = await client.devices.getStatus(device.deviceId);
         let openClosed = status.components.main.contactSensor.contact.value;
-        if (openClosed == 'open') openClosed = 'OPEN';
-        console.log(`${openClosed}: ${device.label}`);
-    });
+        info.push([device.label, openClosed]);
+    }
+    console.log('checkDoorsAndWindows: exit', info);
+    return info;
 }
 
 //*-----------------------------------------------------------------------------
@@ -41,14 +52,6 @@ fetchData = async (client) => {
 }
 exports.fetchData = fetchData
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-exports.init = async () => {
-    client = new SmartThingsClient(
-        new BearerTokenAuthenticator('d2856d93-cb36-46e2-a49f-c9a4b4b166e9'));
-    listOfAllDevices = await fetchData(client);
-    return listOfAllDevices
-}
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
