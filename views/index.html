@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
         integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
 
-    <link id="favicon" rel="icon" href="/favicon.png">
+    <link id="favicon" rel="icon" href="./favicon.png">
     <link rel="stylesheet" href="/style.css">
     <script src="/script.js" defer></script>
 </head>
@@ -24,38 +24,25 @@
 
         <div id="main-container" class="container-fluid">
             <div id="titleRow" class="row row-cols-12">
-                Title goes here
+                <h2 class="center">Title goes here</h2>
             </div>
 
-            <div class="row row-cols-12">
-                contant sensors are next
-            </div>
-            <div id="sensorsRow" class="row row-cols-12">
-                <div class="col deviceCell">sensor01</div>
-                <div class="col deviceCell">sensor02</div>
-                <div class="col deviceCell">sensor03</div>
-                <div class="col deviceCell">sensor04</div>
-                <div class="col deviceCell">sensor05</div>
-                <div class="col deviceCell">sensor06</div>
-                <div class="col deviceCell">sensor07</div>
-                <div class="col deviceCell">sensor08</div>
-                <div class="col deviceCell">sensor09</div>
-                <div class="col deviceCell">sensor10</div>
-                <div class="col deviceCell">sensor11</div>
-                <div class="col deviceCell">sensor12</div>
-                <div class="col deviceCell">sensor13</div>
-                <div class="col deviceCell">sensor14</div>
-
-            </div>
+        <div id="navBar" class="row row-cols-12">
+        <button type="button" class="btn btn-primary">All Sensors</button>
+        <button type="button" class="btn btn-primary">Open Sensors</button>
+        <button type="button" class="btn btn-primary">Other Devices</button>
+        </div>
+        <div id="allSensorsRow" class="row row-cols-12">
+            <h2>Loading...</h2>
+        </div>
+        <div id="openSensorsRow" class="row row-cols-12">
+            <h2>Loading...</h2>
+        </div>
+        <div id="otherDevicesRow" class="row row-cols-12">
+            <h2>Loading...</h2>
+        </div>
         </div>
 
-        <!--
-<section class="devices">
-    <ul id="devices">
-        <em>loading devices&hellip;</em>
-    </ul>
-</section>
--->
     </main>
 
     <!--

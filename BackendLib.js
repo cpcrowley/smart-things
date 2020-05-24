@@ -32,16 +32,16 @@ exports.listOfContactSensors = async (listOfAllDevices) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 exports.checkDoorsAndWindows = async (sensorList) => {
-    console.log('checkDoorsAndWindows: enter');
+    // console.log('checkDoorsAndWindows: enter');
     let info = [];
     for (let i = 0; i < sensorList.length; ++i) {
         device = sensorList[i];
-        console.log('sensor: ' + device.label);
+        // console.log('sensor: ' + device.label);
         let status = await client.devices.getStatus(device.deviceId);
         let openClosed = status.components.main.contactSensor.contact.value;
         info.push([device.label, openClosed]);
     }
-    console.log('checkDoorsAndWindows: exit', info);
+    // console.log('checkDoorsAndWindows: exit', info);
     return info;
 }
 

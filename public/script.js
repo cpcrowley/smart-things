@@ -15,24 +15,36 @@ var listOfContactSensors = (allDevices) => {
     return sensorList;
 }
 
-const sensorsRow = document.getElementById("sensorsRow");
+const allSensorsRow = document.getElementById("allSensorsRow");
+const openSensorsRow = document.getElementById("openSensorsRow");
+const otherDevicesRow = document.getElementById("otherDevicesRow");
 
 function showDevices(devices) {
-    console.log('showDevices')
     let html = '';
     devices.forEach(device => {
         html += `<div class="col deviceCell">${device.label}</div>`;
     })
-    sensorsRow.innerHTML = html;
-    console.log('html', html)
+    otherDevicesRow.innerHTML = html;
+}
+function showSensors(sensorInfo) {
+    let html = '';
+    sensorInfo.forEach(sensor => {
+        html += `<div class="col deviceCell ${sensor[1]}">${sensor[0]} ${sensor[1]}</div>`;
+    })
+    allSensorsRow.innerHTML = html;
 }
 
-// fetch the initial list of dreams
-fetch("/devices")
+fetch("/sensors")
     .then(response => response.json()) // parse the JSON from the server
-    .then(devices => {
-        console.log(`/devices returned ${devices.length} devices`);
-        let sensorList = listOfContactSensors(devices);
-        console.log(`${sensorList.length} contact sensors`);
-        showDevices(sensorList)
+    .then(sensors => {
+        console.log(`/sensors: ${sensors}`);
+        showSensors(sensors)
     });
+// fetch("/devices")
+//     .then(response => response.json()) // parse the JSON from the server
+//     .then(devices => {
+//         console.log(`/devices returned ${devices.length} devices`);
+//         let sensorList = listOfContactSensors(devices);
+//         console.log(`${sensorList.length} contact sensors`);
+//         showDevices(sensorList)
+//     });
