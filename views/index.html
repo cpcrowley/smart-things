@@ -27,20 +27,38 @@
                 <h2 class="center">Title goes here</h2>
             </div>
 
-        <div id="navBar" class="row row-cols-12">
-        <button type="button" class="btn btn-primary">All Sensors</button>
-        <button type="button" class="btn btn-primary">Open Sensors</button>
-        <button type="button" class="btn btn-primary">Other Devices</button>
-        </div>
-        <div id="allSensorsRow" class="row row-cols-12">
-            <h2>Loading...</h2>
-        </div>
-        <div id="openSensorsRow" class="row row-cols-12">
-            <h2>Loading...</h2>
-        </div>
-        <div id="otherDevicesRow" class="row row-cols-12">
-            <h2>Loading...</h2>
-        </div>
+            <div id="buttonRow" class="row row-cols-12">
+                <ul class="nav">
+                    <li class="nav-item">
+                        <a id="allSensorsButton" class="nav-link active" href="#">
+                            All Sensors</a>
+                    </li>
+                    <li class="nav-item">
+                        <a id="openSensorsButton" class="nav-link" href="#">
+                            Open Sensors</a>
+                    </li>
+                        <li class="nav-item">
+                            <a id="batteriesButton" class="nav-link" href="#">
+                                Batteries</a>
+                        </li>
+                        <li class="nav-item">
+                            <a id="switchesButton" class="nav-link" href="#">
+                                Switches</a>
+                        </li>
+                        <li class="nav-item">
+                            <a id="tempsButton" class="nav-link" href="#">
+                                Temps</a>
+                        </li>
+                    <li class="nav-item">
+                        <a id="otherDevicesButton" class="nav-link" href="#">
+                            Other Devices</a>
+                    </li>
+                </ul>
+            </div>
+
+            <div id="rowOfDevices" class="row row-cols-12">
+                <h2>Devices go here</h2>
+            </div>
         </div>
 
     </main>

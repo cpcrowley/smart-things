@@ -19,17 +19,16 @@ app.get("/", (request, response) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 let devicesList = [];
+let devicesInfo = [];
 let sensorsList = [];
 let sensorsInfo = [];
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.get("/devices", (request, response) => {
-    // express helps us take JS objects and send them as JSON
     client.devices.list().then(devices => {
-        console.log('/devices devices.length:', devices.length)
-        devicesList = devices;
-        response.json(devices);
+        devicesInfo = devicesList.map(makeDeviceInfo);
+        response.json(devicesInfo);
     });
 });
 
@@ -40,32 +39,48 @@ app.get("/sensors", async (request, response) => {
     response.json(sensorsInfo);
 });
 
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 function getETime() {
     let time = new Date().toISOString();
-    return time;
+    return time.substring(17, 23);
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+function makeDeviceInfo(device) {
+    let cap0id = 'none';
+    let cap1id = 'none';
+    if (device.components && device.components.length > 0) {
+        capabilities = device.components[0].capabilities;
+        if (capabilities && capabilities.length > 1) {
+            cap0id = capabilities[0].id;
+            cap1id = capabilities[1].id;
+        }
+    }
+    return {
+        deviceId: device.deviceId,
+        name: device.name,
+        label: device.label,
+        cap0id: cap0id,
+        cap1id: cap1id,
+    };
 }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function fetchData() {
-    BackendLib.init().then(result => {
-        devicesList = result;
-        console.log(`fetchData: #deviceList: ${devicesList.length} [${getETime()}]`);
-        BackendLib.listOfContactSensors(devicesList).then(async list => {
-            sensorsList = list;
-            console.log(`fetchData: #sensorList: ${sensorsList.length} [${getETime()}]`);
-            sensorsInfo = await BackendLib.checkDoorsAndWindows(sensorsList);
-            console.log(`fetchData: #sensorsInfo: ${sensorsInfo.length} [${getETime()}]`,
-            sensorsInfo);
-        })
-    })
-}
+    devicesList = await BackendLib.init();
+    console.log(`${getETime()}: fetchData: #devicesList: ${devicesList.length}`);
+    devicesInfo = devicesList.map(makeDeviceInfo);
+    sensorsList = BackendLib.listOfContactSensors(devicesList);
+} 
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 const listener = app.listen(PORT, () => {
-    console.log("Your app is listening on port " + listener.address().port);
+    console.log(`${getETime()}: fetchData: start`);
     fetchData().then(() => {
-        // console.log('fetchData finished');
+        console.log(`${getETime()}: fetchData finished`);
     });
 });

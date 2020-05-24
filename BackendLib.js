@@ -4,6 +4,26 @@ var client = null;
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
+function getETime() {
+    let time = new Date().toISOString();
+    return time.substring(17, 23);
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+exports.checkDoorsAndWindows = async (sensorList) => {
+    let info = [];
+    for (let i = 0; i < sensorList.length; ++i) {
+        device = sensorList[i];
+        let status = await client.devices.getStatus(device.deviceId);
+        let openClosed = status.components.main.contactSensor.contact.value;
+        info.push([device.label, openClosed]);
+    }
+    return info;
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 exports.init = async () => {
     client = new SmartThingsClient(
         new BearerTokenAuthenticator('d2856d93-cb36-46e2-a49f-c9a4b4b166e9'));
@@ -13,7 +33,7 @@ exports.init = async () => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-exports.listOfContactSensors = async (listOfAllDevices) => {
+exports.listOfContactSensors = (listOfAllDevices) => {
     let sensorList = [];
     listOfAllDevices.forEach(device => {
         let components = device.components;
@@ -28,21 +48,6 @@ exports.listOfContactSensors = async (listOfAllDevices) => {
         }
     });
     return sensorList;
-}
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-exports.checkDoorsAndWindows = async (sensorList) => {
-    // console.log('checkDoorsAndWindows: enter');
-    let info = [];
-    for (let i = 0; i < sensorList.length; ++i) {
-        device = sensorList[i];
-        // console.log('sensor: ' + device.label);
-        let status = await client.devices.getStatus(device.deviceId);
-        let openClosed = status.components.main.contactSensor.contact.value;
-        info.push([device.label, openClosed]);
-    }
-    // console.log('checkDoorsAndWindows: exit', info);
-    return info;
 }
 
 //*-----------------------------------------------------------------------------
@@ -76,6 +81,8 @@ exports.lampCommand = (command) => {
     };
 }
 
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 exports.listDeviceLabels = (deviceList) => {
     let list = [];
     deviceList.forEach(device => list.push(device.label))
