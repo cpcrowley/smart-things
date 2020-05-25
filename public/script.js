@@ -63,16 +63,25 @@ let allButtons = [allSensorsButton, openSensorsButton, batteriesButton,
     switchesButton, tempsButton, otherDevicesButton,];
 let specificDeviceType =
     ['battery', 'contactSensor', 'switch', 'temperatureMeasurement',]
+let currentTabButton = allSensorsButton;
+let loadingIgnoreButtons = false;
+tempsButton.click();
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 function buttonClickHandler(button, url, makeHtml) {
-    allButtons.forEach(button => button.active = false);
-    button.active = true;
+    if (loadingIgnoreButtons) return;
+    currentTabButton.classList.remove('active');
+    button.classList.add('active');
+    currentTabButton = button;
     let savedLabel = button.innerHTML;
 
+    loadingIgnoreButtons = true;
     button.innerHTML = 'Loading...';
-    rowOfDevices.innerHTML = 'Loading...';
+    // rowOfDevices.innerHTML = `Loading ${savedLabel}, please wait...`;
+    rowOfDevices.innerHTML = `<div class="spinner-border" role="status">
+    <span class="sr-only">Loading...</span>
+    </div>`;
     fetch(url)
         .then(response => response.json())
         .then(devicesInfoList => {
@@ -83,6 +92,7 @@ function buttonClickHandler(button, url, makeHtml) {
             });
             rowOfDevices.innerHTML = html;
             button.innerHTML = savedLabel;
+            loadingIgnoreButtons = false;
         });
 }
 

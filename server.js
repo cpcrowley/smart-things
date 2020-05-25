@@ -67,13 +67,25 @@ function makeDeviceInfo(device) {
     };
 }
 
+var locationId = null;
+var currentMode = null;
+
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function fetchData() {
     devicesList = await BackendLib.init();
-    console.log(`${getETime()}: fetchData: #devicesList: ${devicesList.length}`);
+    // console.log(`${getETime()}: fetchData: #devicesList: ${devicesList.length}`);
     devicesInfo = devicesList.map(makeDeviceInfo);
     sensorsList = BackendLib.listOfContactSensors(devicesList);
+    client.locations.list().then(locations => {
+        // console.log('locations[0]', locations[0]);
+        locationId = locations[0].locationId;
+        // console.log(`locationId: ${locationId}`);
+        client.modes.getCurrent(locationId).then(mode => {
+            currentMode = mode;
+            console.log(`currentMode: ${JSON.stringify(currentMode)}`);
+        })
+    });
 } 
 
 //*-----------------------------------------------------------------------------

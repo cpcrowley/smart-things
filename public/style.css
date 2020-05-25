@@ -18,7 +18,8 @@ button {
 
 .deviceCell {
     padding: 10px;
-    border: 2px black solid;
+    border: 1px gray solid;
+    background-color: bisque;
 }
 
 .closed {
