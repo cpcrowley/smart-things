@@ -18,25 +18,41 @@ app.get("/", (request, response) => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-let devicesList = [];
-let devicesInfo = [];
-let sensorsList = [];
-let sensorsInfo = [];
+var savedDeviceList = [];
+// let deviceInfo = [];
+// let sensorList = [];
+// let sensorInfo = [];
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-app.get("/devices", (request, response) => {
+async function getDeviceList() {
+    if (!savedDeviceList) {
+        let list = await client.devices.list();
+        savedDeviceList = list;
+    }
+    return savedDeviceList;
+}
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/devices", async (request, response) => {
+    return await getDeviceList();
+});
+
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/Olddevices", (request, response) => {
     client.devices.list().then(devices => {
-        devicesInfo = devicesList.map(makeDeviceInfo);
-        response.json(devicesInfo);
+        deviceInfo = deviceList.map(makeDeviceInfo);
+        response.json(deviceInfo);
     });
 });
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.get("/sensors", async (request, response) => {
-    sensorsInfo = await BackendLib.checkDoorsAndWindows(sensorsList);
-    response.json(sensorsInfo);
+    sensorInfo = await BackendLib.checkDoorsAndWindows(sensorList);
+    response.json(sensorInfo);
 });
 
 //*-----------------------------------------------------------------------------
@@ -73,10 +89,10 @@ var currentMode = null;
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function fetchData() {
-    devicesList = await BackendLib.init();
+    deviceList = await BackendLib.init();
     // console.log(`${getETime()}: fetchData: #devicesList: ${devicesList.length}`);
-    devicesInfo = devicesList.map(makeDeviceInfo);
-    sensorsList = BackendLib.listOfContactSensors(devicesList);
+    deviceInfo = deviceList.map(makeDeviceInfo);
+    sensorList = BackendLib.listOfContactSensors(deviceList);
     client.locations.list().then(locations => {
         // console.log('locations[0]', locations[0]);
         locationId = locations[0].locationId;
