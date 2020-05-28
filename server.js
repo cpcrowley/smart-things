@@ -12,8 +12,6 @@ const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 var savedRawDeviceList = null;
 var savedDeviceList = null;
 var deviceById = {};
-var savedLocationId = null;
-var currentMode = null;
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -31,10 +29,12 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 //from: https://scotch.io/tutorials/use-expressjs-to-get-url-and-post-parameters
 app.post("/statuses", async (request, response) => {
     // console.log(`${getETime()}: /statuses: request.body`, request.body)
+    let msAtStart = new Date().getTime();
     let idList = request.body.idList;
     // console.log(`${getETime()}: /statuses; request.body.idList`, idList)
     let result = await getStatusForDevicesById(idList);
-    console.log(`${getETime()}: /statuses: result`, result)
+    let ms = new Date().getTime() - msAtStart;
+    console.log(`${idList.length} getStutus calls in ${ms} ms`);
     response.json(result);
 });
 
@@ -93,9 +93,11 @@ app.get("/rawdevices", async (request, response) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.get("/devices", async (request, response) => {
-    console.log(`${getETime()}: /devices called`);
+    // console.log(`${getETime()}: /devices called`);
+    let msAtStart = new Date().getTime();
     await getDeviceList();
-    console.log(`${getETime()}: getDeviceList returned, response to /devices sent`);
+    let ms = new Date().getTime() - msAtStart;
+    console.log(`/devices took ${ms} ms`);
     response.json(savedDeviceList);
 });
 
@@ -138,27 +140,6 @@ function getETime() {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-// function makeDeviceInfo(device) {
-//     let cap0id = 'none';
-//     let cap1id = 'none';
-//     if (device.components && device.components.length > 0) {
-//         capabilities = device.components[0].capabilities;
-//         if (capabilities && capabilities.length > 1) {
-//             cap0id = capabilities[0].id;
-//             cap1id = capabilities[1].id;
-//         }
-//     }
-//     return {
-//         deviceId: device.deviceId,
-//         name: device.name,
-//         label: device.label,
-//         cap0id: cap0id,
-//         cap1id: cap1id,
-//     };
-// }
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
 async function getDeviceStatus(deviceId) {
     // Do not try to get status for the WC Hub
     if (deviceId == '317e7125-c391-478a-8bf8-f694bd632ec6') return;
@@ -195,56 +176,26 @@ async function getDeviceStatus(deviceId) {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-// async function addStatusToDevices() {
-//     await getDeviceList();
-// }
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
 async function getStatusForDevicesById(listOfDeviceIds) {
-    console.log('getStatusForDevicesById: enter');
+    // console.log('getStatusForDevicesById: enter');
     let ret = [];
     for (let i = 0; i < listOfDeviceIds.length; ++i) {
         let deviceId = listOfDeviceIds[i].deviceId;
-        console.log('call getDeviceStatus: ' + deviceId);
+        // console.log('call getDeviceStatus: ' + deviceId);
         let status = await getDeviceStatus(deviceId);
-        console.log('return getDeviceStatus: ' + deviceId);
+        // console.log('return getDeviceStatus: ' + deviceId);
         ret.push({
             device: deviceById[deviceId],
             status: status,
         });
     };
-    console.log('getStatusForDevicesById: return', ret);
+    // console.log('getStatusForDevicesById: return', ret);
     return ret;
 }
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-// async function getDeviceIdsByCapability(capability) {
-//     await getDeviceList();
-//     // console.log(`savedDeviceList:`, savedDeviceList);
-//     let deviceIdList = [];
-//     savedDeviceList.forEach(device => {
-//         if (device.capIdList.includes(capability)) {
-//             deviceIdList.push(device.deviceId);
-//         }
-//     });
-//     return deviceIdList;
-// }
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-// async function testGetStatusByDeviceIdList() {
-//     let cap = 'contactSensor'; // 'contactSensor', 'battery', 'waterSensor'
-//     let l1 = await getDeviceIdsByCapability(cap);
-//     let l2 = await getStatusForDevicesById(l1);
-//     console.log(`device statuses: ${cap}`, l2);
-// }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 const listener = app.listen(PORT, () => {
     console.log(`${getETime()}: listening on port: ${PORT}`);
     console.log(`${getETime()}: fetchData: start`);
-    // testGetStatusByDeviceIdList();
 });

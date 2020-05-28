@@ -49,7 +49,7 @@ fetch('/devices').then(response => {
         }
     });
     console.log('****** lists completed');
-    console.log('333: contactSensorList:', contactSensorList);
+    // console.log('333: contactSensorList:', contactSensorList);
     // console.log('batteryList:', batteryList);
     // console.log('switchList:', switchList);
     // console.log('waterSensorList:', waterSensorList);
@@ -63,14 +63,14 @@ fetch('/devices').then(response => {
 //* Define click event handlers for all the buttons.
 //*-----------------------------------------------------------------------------
 allSensorsButton.addEventListener('click', async () => {
-    console.log('allSensorsButton click enter');
+    // console.log('allSensorsButton click enter');
     buttonClickHandler(allSensorsButton, contactSensorList, statusInfo => {
         // statusInfo: {device: deviceInfo, status: { contactSensor: "open"}}
         let status = statusInfo.status.contactSensor;
         let label = statusInfo.device.label;
         return `<div class="col deviceCell ${status}">${label} ${status}</div>`;
     });
-    console.log('allSensorsButton buttonClickHandler was called');
+    // console.log('allSensorsButton buttonClickHandler was called');
 });
 
 const openSensorsButton = document.getElementById("openSensorsButton");
@@ -131,7 +131,7 @@ currentTabButton = tempsButton;
 //*-----------------------------------------------------------------------------
 async function postData(url = '', data = {}) {
     let json = JSON.stringify(data);
-    console.log('postData: call with', json)
+    // console.log('postData: call with', json)
     // Default options are marked with *
     const response = await fetch(url, {
         method: 'POST', // POST *GET,, PUT, DELETE, etc.
@@ -146,9 +146,9 @@ async function postData(url = '', data = {}) {
         referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
         body: json // body data type must match "Content-Type" header
     });
-    console.log('postData: return with', response);
+    // console.log('postData: return with', response);
     json = response.json();
-    console.log('postData: return as JSON', json);
+    // console.log('postData: return as JSON', json);
     return json; // parses JSON response into native JavaScript objects
 }
 
@@ -156,8 +156,8 @@ async function postData(url = '', data = {}) {
 //* button click handler common code.
 //*-----------------------------------------------------------------------------
 function buttonClickHandler(button, idList, makeHtml) {
-    console.log('buttonClickHandler: called idList');
     if (loadingIgnoreButtons) return;
+    let msAtStart = new Date().getTime();
 
     currentTabButton.classList.remove('active');
     button.classList.add('active');
@@ -170,10 +170,7 @@ function buttonClickHandler(button, idList, makeHtml) {
     <span class="sr-only">Loading...</span>
     </div>`;
 
-    console.log('buttonClickHandler: POST /statuses');
     postData('/statuses', { idList: idList }).then(devicesInfoList => {
-        console.log('buttonClickHandler: RETURN from POST /statuses',
-            devicesInfoList);
         let html = '';
         devicesInfoList.forEach(device => {
             let newHtml = makeHtml(device);
@@ -183,5 +180,6 @@ function buttonClickHandler(button, idList, makeHtml) {
 
         button.innerHTML = savedLabel;
         loadingIgnoreButtons = false;
+        console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
     });
 }
