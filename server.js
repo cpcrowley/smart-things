@@ -7,9 +7,36 @@ const PORT = 3344;
 const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 // const client = new SmartThingsClient(new BearerTokenAuthenticator(process.env.PAT))
 
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+var savedRawDeviceList = null;
+var savedDeviceList = null;
+var deviceById = {};
+var savedLocationId = null;
+var currentMode = null;
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 // make all the files in 'public' available
 // https://expressjs.com/en/starter/static-files.html
 app.use(express.static("public"));
+
+// from: https://scotch.io/tutorials/use-expressjs-to-get-url-and-post-parameters
+var bodyParser = require('body-parser');
+app.use(bodyParser.json()); // support json encoded bodies
+app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+//from: https://scotch.io/tutorials/use-expressjs-to-get-url-and-post-parameters
+app.post("/statuses", async (request, response) => {
+    // console.log(`${getETime()}: /statuses: request.body`, request.body)
+    let idList = request.body.idList;
+    // console.log(`${getETime()}: /statuses; request.body.idList`, idList)
+    let result = await getStatusForDevicesById(idList);
+    console.log(`${getETime()}: /statuses: result`, result)
+    response.json(result);
+});
 
 // https://expressjs.com/en/starter/basic-routing.html
 app.get("/", (request, response) => {
@@ -18,42 +45,89 @@ app.get("/", (request, response) => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-var savedDeviceList = [];
-// let deviceInfo = [];
-// let sensorList = [];
-// let sensorInfo = [];
+function processDeviceList(l) {
+    return l.map(device => {
+        let components0 = device.components[0];
+        let capabilities = components0.capabilities;
+        let capList = [];
+        let capIdList = [];
+        if (capabilities) {
+            capabilities.forEach(cap => {
+                capList.push(JSON.stringify(cap));
+                capIdList.push(cap.id);
+            });
+        }
+        return {
+            deviceId: device.deviceId,
+            name: device.name,
+            label: device.label,
+            capIdList: capIdList,
+        };
+    })
+}
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function getDeviceList() {
-    if (!savedDeviceList) {
+    if (!savedRawDeviceList) {
         let list = await client.devices.list();
-        savedDeviceList = list;
+        savedLocationId = list[0].locationId;
+        savedRawDeviceList = list;
+        savedDeviceList = processDeviceList(list);
+        savedDeviceList.forEach(device => {
+            deviceById[device.deviceId] = device;
+        })
     }
-    return savedDeviceList;
+    return savedRawDeviceList;
 }
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/rawdevices", async (request, response) => {
+    console.log(`${getETime()}: /rawdevices called`);
+    let dl = await getDeviceList();
+    console.log(`${getETime()}: getDeviceList returned, response to /rawdevices sent`);
+    response.json(dl);
+});
+
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.get("/devices", async (request, response) => {
-    return await getDeviceList();
-});
-
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-app.get("/Olddevices", (request, response) => {
-    client.devices.list().then(devices => {
-        deviceInfo = deviceList.map(makeDeviceInfo);
-        response.json(deviceInfo);
-    });
+    console.log(`${getETime()}: /devices called`);
+    await getDeviceList();
+    console.log(`${getETime()}: getDeviceList returned, response to /devices sent`);
+    response.json(savedDeviceList);
 });
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-app.get("/sensors", async (request, response) => {
-    sensorInfo = await BackendLib.checkDoorsAndWindows(sensorList);
-    response.json(sensorInfo);
-});
+async function getStatus(id) {
+    let status = {};
+    if (id) {
+        status = await client.devices.getStatus(id);
+    }
+    // console.log('/status: ', status);
+    return status;
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+// app.get("/status", async (request, response) => {
+//     response.json(getStatus(request.query.id));
+// });
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+// app.get("/sensors", async (request, response) => {
+//     let sensorInfo = [];
+//     for (let i = 0; i < sensorList.length; ++i) {
+//         device = sensorList[i];
+//         let status = await client.devices.getStatus(device.deviceId);
+//         let openClosed = status.components.main.contactSensor.contact.value;
+//         sensorInfo.push([device.label, openClosed]);
+//     }
+//     response.json(sensorInfo);
+// });
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -64,51 +138,113 @@ function getETime() {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-function makeDeviceInfo(device) {
-    let cap0id = 'none';
-    let cap1id = 'none';
-    if (device.components && device.components.length > 0) {
-        capabilities = device.components[0].capabilities;
-        if (capabilities && capabilities.length > 1) {
-            cap0id = capabilities[0].id;
-            cap1id = capabilities[1].id;
-        }
+// function makeDeviceInfo(device) {
+//     let cap0id = 'none';
+//     let cap1id = 'none';
+//     if (device.components && device.components.length > 0) {
+//         capabilities = device.components[0].capabilities;
+//         if (capabilities && capabilities.length > 1) {
+//             cap0id = capabilities[0].id;
+//             cap1id = capabilities[1].id;
+//         }
+//     }
+//     return {
+//         deviceId: device.deviceId,
+//         name: device.name,
+//         label: device.label,
+//         cap0id: cap0id,
+//         cap1id: cap1id,
+//     };
+// }
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+async function getDeviceStatus(deviceId) {
+    // Do not try to get status for the WC Hub
+    if (deviceId == '317e7125-c391-478a-8bf8-f694bd632ec6') return;
+
+    let rawStatus = await getStatus(deviceId);
+    let statuses = {};
+    if (rawStatus && rawStatus.components && rawStatus.components.main) {
+        statuses = rawStatus.components.main;
     }
-    return {
-        deviceId: device.deviceId,
-        name: device.name,
-        label: device.label,
-        cap0id: cap0id,
-        cap1id: cap1id,
-    };
+    let status = {};
+
+    if (statuses.switch && statuses.switch.switch
+        && statuses.switch.switch.value)
+        status.switch = statuses.switch.switch.value;
+    
+    if (statuses.contactSensor && statuses.contactSensor.contact
+        && statuses.contactSensor.contact.value)
+        status.contactSensor = statuses.contactSensor.contact.value;
+    
+    if (statuses.battery && statuses.battery.battery
+        && statuses.battery.battery.value)
+        status.battery = statuses.battery.battery.value;
+    
+    if (statuses.temperatureMeasurement && statuses.temperatureMeasurement.temp
+        && statuses.temperatureMeasurement.temp.value)
+        status.temp = statuses.temperatureMeasurement.temp.value;
+    
+    if (statuses.waterSensor && statuses.waterSensor.water
+        && statuses.waterSensor.water.value)
+        status.waterSensor = statuses.waterSensor.water.value;
+    
+    return status; 
 }
 
-var locationId = null;
-var currentMode = null;
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+// async function addStatusToDevices() {
+//     await getDeviceList();
+// }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function fetchData() {
-    deviceList = await BackendLib.init();
-    // console.log(`${getETime()}: fetchData: #devicesList: ${devicesList.length}`);
-    deviceInfo = deviceList.map(makeDeviceInfo);
-    sensorList = BackendLib.listOfContactSensors(deviceList);
-    client.locations.list().then(locations => {
-        // console.log('locations[0]', locations[0]);
-        locationId = locations[0].locationId;
-        // console.log(`locationId: ${locationId}`);
-        client.modes.getCurrent(locationId).then(mode => {
-            currentMode = mode;
-            console.log(`currentMode: ${JSON.stringify(currentMode)}`);
-        })
-    });
-} 
+async function getStatusForDevicesById(listOfDeviceIds) {
+    console.log('getStatusForDevicesById: enter');
+    let ret = [];
+    for (let i = 0; i < listOfDeviceIds.length; ++i) {
+        let deviceId = listOfDeviceIds[i].deviceId;
+        console.log('call getDeviceStatus: ' + deviceId);
+        let status = await getDeviceStatus(deviceId);
+        console.log('return getDeviceStatus: ' + deviceId);
+        ret.push({
+            device: deviceById[deviceId],
+            status: status,
+        });
+    };
+    console.log('getStatusForDevicesById: return', ret);
+    return ret;
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+// async function getDeviceIdsByCapability(capability) {
+//     await getDeviceList();
+//     // console.log(`savedDeviceList:`, savedDeviceList);
+//     let deviceIdList = [];
+//     savedDeviceList.forEach(device => {
+//         if (device.capIdList.includes(capability)) {
+//             deviceIdList.push(device.deviceId);
+//         }
+//     });
+//     return deviceIdList;
+// }
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+// async function testGetStatusByDeviceIdList() {
+//     let cap = 'contactSensor'; // 'contactSensor', 'battery', 'waterSensor'
+//     let l1 = await getDeviceIdsByCapability(cap);
+//     let l2 = await getStatusForDevicesById(l1);
+//     console.log(`device statuses: ${cap}`, l2);
+// }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 const listener = app.listen(PORT, () => {
+    console.log(`${getETime()}: listening on port: ${PORT}`);
     console.log(`${getETime()}: fetchData: start`);
-    fetchData().then(() => {
-        console.log(`${getETime()}: fetchData finished`);
-    });
+    // testGetStatusByDeviceIdList();
 });

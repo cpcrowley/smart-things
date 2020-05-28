@@ -14,6 +14,7 @@
   "license": "ISC",
   "dependencies": {
     "@smartthings/core-sdk": "^0.2.11",
+    "body-parser": "^1.19.0",
     "express": "^4.17.1"
   },
   "devDependencies": {
