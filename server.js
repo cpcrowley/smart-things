@@ -149,29 +149,32 @@ async function getDeviceStatus(deviceId) {
     if (rawStatus && rawStatus.components && rawStatus.components.main) {
         statuses = rawStatus.components.main;
     }
+    console.log('statuses', statuses)
     let status = {};
 
     if (statuses.switch && statuses.switch.switch
         && statuses.switch.switch.value)
         status.switch = statuses.switch.switch.value;
-    
+
     if (statuses.contactSensor && statuses.contactSensor.contact
         && statuses.contactSensor.contact.value)
         status.contactSensor = statuses.contactSensor.contact.value;
-    
+
     if (statuses.battery && statuses.battery.battery
         && statuses.battery.battery.value)
         status.battery = statuses.battery.battery.value;
-    
-    if (statuses.temperatureMeasurement && statuses.temperatureMeasurement.temp
-        && statuses.temperatureMeasurement.temp.value)
-        status.temp = statuses.temperatureMeasurement.temp.value;
-    
+
+    let temperatureMeasurement = statuses.temperatureMeasurement;
+    if (temperatureMeasurement) {
+        let temp = temperatureMeasurement.temperature;
+        status.temp = temp.value + '&deg;' + temp.unit;
+    }
+
     if (statuses.waterSensor && statuses.waterSensor.water
         && statuses.waterSensor.water.value)
         status.waterSensor = statuses.waterSensor.water.value;
-    
-    return status; 
+
+    return status;
 }
 
 //*-----------------------------------------------------------------------------

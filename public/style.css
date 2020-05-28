@@ -22,10 +22,10 @@ button {
     background-color: bisque;
 }
 
-.closed {
+.closed, .off {
     background-color: pink;
 }
 
-.open {
+.open, .on {
     background-color: lightgreen;
 }

@@ -16,11 +16,9 @@ let loadingIgnoreButtons = false;
 
 // Fetch the device list
 fetch('/devices').then(response => {
-    // console.log('111: /devices response', response);
     return response.json();
 }).then(devicesInfoList => {
     deviceList = devicesInfoList;
-    // console.log('222: /devices: deviceList', deviceList);
     deviceList.forEach(device => {
         let deviceOnAList = false;
         let capIdList = device.capIdList;
@@ -49,12 +47,7 @@ fetch('/devices').then(response => {
         }
     });
     console.log('****** lists completed');
-    // console.log('333: contactSensorList:', contactSensorList);
-    // console.log('batteryList:', batteryList);
-    // console.log('switchList:', switchList);
-    // console.log('waterSensorList:', waterSensorList);
-    // console.log('tempList:', tempList);
-    // console.log('otherDevicesList:', otherDevicesList);
+    tempsButton.click();
 }).catch(error => {
     console.log('****** fetch call then block ERROR', error);
 });
@@ -100,16 +93,18 @@ switchesButton.addEventListener('click', async () =>
         // statusInfo: {device: deviceInfo, status: { switch: "on"}}
         let status = statusInfo.status.switch;
         let label = statusInfo.device.label;
-        return `<div class="col deviceCell">${label} ${status}</div>`;
+        return `<div class="col deviceCell" ${status}>${label} ${status}</div>`;
     }));
 
 const tempsButton = document.getElementById("tempsButton");
 tempsButton.addEventListener('click', async () =>
     buttonClickHandler(tempsButton, tempList, statusInfo => {
         // statusInfo: {device: deviceInfo, status: { temp: degrees"}}
-        let status = statusInfo.status.temp;
+        console.log('statusInfo', statusInfo)
+        console.log('statusInfo.status', statusInfo.status)
+        let temp = statusInfo.status.temp;
+        console.log('temp', temp)
         let label = statusInfo.device.label;
-
         return `<div class="col deviceCell">${label} ${temp}</div>`;
     }));
 
@@ -124,7 +119,6 @@ otherDevicesButton.addEventListener('click', async () =>
     }));
 
 currentTabButton = tempsButton;
-// allSensorsButton.click();
 
 //*-----------------------------------------------------------------------------
 //* from: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
@@ -155,7 +149,7 @@ async function postData(url = '', data = {}) {
 //*-----------------------------------------------------------------------------
 //* button click handler common code.
 //*-----------------------------------------------------------------------------
-function buttonClickHandler(button, idList, makeHtml) {
+async function buttonClickHandler(button, idList, makeHtml) {
     if (loadingIgnoreButtons) return;
     let msAtStart = new Date().getTime();
 
@@ -170,16 +164,16 @@ function buttonClickHandler(button, idList, makeHtml) {
     <span class="sr-only">Loading...</span>
     </div>`;
 
-    postData('/statuses', { idList: idList }).then(devicesInfoList => {
-        let html = '';
-        devicesInfoList.forEach(device => {
-            let newHtml = makeHtml(device);
-            if (newHtml) html += newHtml;
-        });
-        rowOfDevices.innerHTML = html;
+    let devicesInfoList = await postData('/statuses', { idList: idList });
 
-        button.innerHTML = savedLabel;
-        loadingIgnoreButtons = false;
-        console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
+    let html = '';
+    devicesInfoList.forEach(device => {
+        let newHtml = makeHtml(device);
+        if (newHtml) html += newHtml;
     });
+    rowOfDevices.innerHTML = html;
+
+    button.innerHTML = savedLabel;
+    loadingIgnoreButtons = false;
+    console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
 }
