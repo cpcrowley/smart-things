@@ -2,16 +2,17 @@
 //* Do initial setup
 //*-----------------------------------------------------------------------------
 const rowOfDevices = document.getElementById("rowOfDevices");
-const allSensorsButton = document.getElementById("allSensorsButton");
 var deviceList = [];
 var contactSensorList = [];
 var batteryList = [];
+var lightList = [];
 var switchList = [];
 var tempList = [];
 var waterSensorList = [];
+var alarmList = [];
 var otherDevicesList = [];
 
-var currentTabButton = allSensorsButton;
+var currentTabButton;
 let loadingIgnoreButtons = false;
 
 // Fetch the device list
@@ -30,8 +31,15 @@ fetch('/devices').then(response => {
             batteryList.push(device);
             deviceOnAList = true;
         }
-        if (capIdList.includes('switch')) {
-            switchList.push(device);
+        if (capIdList.includes('light')) {
+            lightList.push(device);
+            deviceOnAList = true;
+        } else if (capIdList.includes('alarm')) {
+            alarmList.push(device);
+            deviceOnAList = true;
+        } else if (capIdList.includes('switch')) {
+                switchList.push(device);
+            
             deviceOnAList = true;
         }
         if (capIdList.includes('waterSensor')) {
@@ -47,75 +55,132 @@ fetch('/devices').then(response => {
         }
     });
     console.log('****** lists completed');
+
+    let byLabel = (a, b) => a.label.localeCompare(b.label);
+    contactSensorList.sort(byLabel);
+    batteryList.sort(byLabel);
+    lightList.sort(byLabel);
+    alarmList.sort(byLabel);
+    waterSensorList.sort(byLabel);
+    tempList.sort(byLabel);
+    otherDevicesList.sort(byLabel);
+
     tempsButton.click();
+    currentTabButton = tempsButton;
 }).catch(error => {
     console.log('****** fetch call then block ERROR', error);
 });
 
+let idIndexList = [];
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+function cell(background, label, status, statusColor, kindIndex, onClickId) {
+    if (!status) status = '';
+    if (!statusColor) statusColor = 'blue';
+    let idIndex = idIndexList.length;
+    idIndexList.push(onClickId);
+
+    return `<div class="col deviceCell ${background}"
+    onclick="onClick(${kindIndex},${idIndex});">
+        <span class="italic">${label}</span>
+        <span class="${statusColor}">${status}</span> 
+    </div>`;
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+function onClick(kindIndex, idIndex) {
+    console.log(`***** onClick: ${kindIndex}: ${idIndex}`);
+    let kind = 'NONE';
+    switch (kindIndex) {
+        case 1: kind = 'temp'; break;
+        case 2: kind = 'light'; break;
+        case 3: kind = 'battery'; break;
+        case 4: kind = 'switch'; break;
+        case 5: kind = 'alarm'; break;
+        case 6: kind = 'sensor'; break;
+    }
+    let id = idIndexList[idIndex];
+    console.log(`***** onClick: ${kind}: ${id}`);
+}
+
+/*
+temp = 1
+*/
+
 //*-----------------------------------------------------------------------------
 //* Define click event handlers for all the buttons.
 //*-----------------------------------------------------------------------------
-allSensorsButton.addEventListener('click', async () => {
-    // console.log('allSensorsButton click enter');
-    buttonClickHandler(allSensorsButton, contactSensorList, statusInfo => {
-        // statusInfo: {device: deviceInfo, status: { contactSensor: "open"}}
-        let status = statusInfo.status.contactSensor;
+const tempsButton = document.getElementById("tempsButton");
+tempsButton.addEventListener('click', async () =>
+    buttonClickHandler(tempsButton, tempList, statusInfo => {
+        // statusInfo: {device: deviceInfo, status: { temp: degrees"}}
+        let id = statusInfo.device.deviceId;
+        let temp = statusInfo.status.temp;
+        let color = parseInt(temp) > 89 ? 'red' : 'blue';
         let label = statusInfo.device.label;
-        return `<div class="col deviceCell ${status}">${label} ${status}</div>`;
-    });
-    // console.log('allSensorsButton buttonClickHandler was called');
-});
+        let html = cell('default-background', label, temp, color, 1, id);
+        return html;
+    }));
 
-const openSensorsButton = document.getElementById("openSensorsButton");
-openSensorsButton.addEventListener('click', async () =>
-    buttonClickHandler(openSensorsButton, contactSensorList, statusInfo => {
-        // statusInfo: {device: deviceInfo, status: { contactSensor: "open"}}
-        let status = statusInfo.status.contactSensor;
-        if (status == 'open') {
-            let label = statusInfo.device.label;
-            return `<div class="col deviceCell open">${label} open</div>`;
-        }
-        return null;
+const lightsButton = document.getElementById("lightsButton");
+lightsButton.addEventListener('click', async () =>
+    buttonClickHandler(tempsButton, lightList, statusInfo => {
+        // statusInfo: {device: deviceInfo, status: { temp: degrees"}}
+        let id = statusInfo.device.deviceId;
+        let light = statusInfo.status.light;
+        let symbol = light == 'on' ? '&#9728;' : '🚫';
+        let label = statusInfo.device.label;
+        return cell(light, label, symbol, 'blue', 2, id);
     }));
 
 const batteriesButton = document.getElementById("batteriesButton");
 batteriesButton.addEventListener('click', async () =>
     buttonClickHandler(batteriesButton, batteryList, statusInfo => {
         // statusInfo: {device: deviceInfo, status: { battery: pct}}
+        let id = statusInfo.device.deviceId;
         let status = statusInfo.status.battery;
+        let pc = parseInt(status);
+        let color = 'blue';
+        if (pc < 50) color = 'red';
+        else if (pc < 75) color = 'orange';
         let label = statusInfo.device.label;
-        return `<div class="col deviceCell">${label} ${status}%</div>`;
+        return cell('default-background', label, status + '%', color, 3, id);
     }));
 
 const switchesButton = document.getElementById("switchesButton");
 switchesButton.addEventListener('click', async () =>
     buttonClickHandler(switchesButton, switchList, statusInfo => {
         // statusInfo: {device: deviceInfo, status: { switch: "on"}}
+        let id = statusInfo.device.deviceId;
         let status = statusInfo.status.switch;
         let label = statusInfo.device.label;
-        return `<div class="col deviceCell" ${status}>${label} ${status}</div>`;
+        return cell(status, label, status, 'blue', 4, id);
     }));
 
-const tempsButton = document.getElementById("tempsButton");
-tempsButton.addEventListener('click', async () =>
-    buttonClickHandler(tempsButton, tempList, statusInfo => {
-        // statusInfo: {device: deviceInfo, status: { temp: degrees"}}
-        console.log('statusInfo', statusInfo)
-        console.log('statusInfo.status', statusInfo.status)
-        let temp = statusInfo.status.temp;
-        console.log('temp', temp)
-        let label = statusInfo.device.label;
-        return `<div class="col deviceCell">${label} ${temp}</div>`;
-    }));
-
-const otherDevicesButton = document.getElementById("otherDevicesButton");
-otherDevicesButton.addEventListener('click', async () =>
-    buttonClickHandler(otherDevicesButton, otherDevicesList, statusInfo => {
+const alarmsButton = document.getElementById("alarmsButton");
+alarmsButton.addEventListener('click', async () =>
+    buttonClickHandler(alarmsButton, alarmList, statusInfo => {
         // statusInfo: {device: deviceInfo, status: { ...}}
-        let status = statusInfo.status;
+        let id = statusInfo.device.deviceId;
+        let alarm = statusInfo.status.alarm;
+        let symbol = alarm == 'on' ? '🔔' : '🔕';
+        let color = 'blue';
+        if (alarm == 'on') color = 'red';
         let label = statusInfo.device.label;
+        return cell(alarm, label, symbol, color, 5, id);
+    }));
 
-        return `<div class="col deviceCell">${label} ${status}</div>`;
+const sensorsButton = document.getElementById("sensorsButton");
+sensorsButton.addEventListener('click', async () =>
+    buttonClickHandler(sensorsButton, contactSensorList, statusInfo => {
+        // statusInfo: {device: deviceInfo, status: { contactSensor: "open"}}
+        let id = statusInfo.device.deviceId;
+        let contactSensor = statusInfo.status.contactSensor;
+        let label = statusInfo.device.label;
+        // console.log(`sensor ${label} ${contactSensor}`)
+        return cell(contactSensor, label, '', 'blue', 6, id);
     }));
 
 currentTabButton = tempsButton;
@@ -159,9 +224,9 @@ async function buttonClickHandler(button, idList, makeHtml) {
     let savedLabel = button.innerHTML;
 
     loadingIgnoreButtons = true;
-    button.innerHTML = 'Loading...';
+    button.innerHTML = 'Loading&hellip;';
     rowOfDevices.innerHTML = `<div class="spinner-border" role="status">
-    <span class="sr-only">Loading...</span>
+    <span class="sr-only">Loading&hellip;</span>
     </div>`;
 
     let devicesInfoList = await postData('/statuses', { idList: idList });

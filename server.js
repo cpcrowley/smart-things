@@ -149,20 +149,39 @@ async function getDeviceStatus(deviceId) {
     if (rawStatus && rawStatus.components && rawStatus.components.main) {
         statuses = rawStatus.components.main;
     }
-    console.log('statuses', statuses)
     let status = {};
 
-    if (statuses.switch && statuses.switch.switch
-        && statuses.switch.switch.value)
-        status.switch = statuses.switch.switch.value;
+    let light = statuses.light;
+    if (light && light.switch)
+        status.light = light.switch.value; // on/off
 
-    if (statuses.contactSensor && statuses.contactSensor.contact
-        && statuses.contactSensor.contact.value)
-        status.contactSensor = statuses.contactSensor.contact.value;
+    let switchLevel = statuses.switchLevel;
+    if (switchLevel && switchLevel.level) // 99%
+        status.switchLevel = switchLevel.level.value + switchLevel.level.unit;
 
-    if (statuses.battery && statuses.battery.battery
-        && statuses.battery.battery.value)
-        status.battery = statuses.battery.battery.value;
+    let alarm = statuses.alarm;
+    if (alarm && alarm.alarm)
+        status.alarm = alarm.alarm.value; // on/off
+
+    let videoCamera = statuses.videoCamera;
+    if (videoCamera && videoCamera.camera)
+        status.videoCamera = videoCamera.camera.value; // on/off
+
+    let musicPlayer = statuses.musicPlayer;
+    if (musicPlayer && musicPlayer.status)
+        status.musicPlayer = musicPlayer.status.value; // on/off
+
+    let switchValue = statuses.switch;
+    if (switchValue && switchValue.switch)
+        status.switch = switchValue.switch.value;
+
+    let contactSensor = statuses.contactSensor;
+    if (contactSensor && contactSensor.contact)
+        status.contactSensor = contactSensor.contact.value;
+
+    let battery = statuses.battery;
+    if (battery && battery.battery)
+        status.battery = battery.battery.value;
 
     let temperatureMeasurement = statuses.temperatureMeasurement;
     if (temperatureMeasurement) {
@@ -170,10 +189,10 @@ async function getDeviceStatus(deviceId) {
         status.temp = temp.value + '&deg;' + temp.unit;
     }
 
-    if (statuses.waterSensor && statuses.waterSensor.water
-        && statuses.waterSensor.water.value)
-        status.waterSensor = statuses.waterSensor.water.value;
-
+    let waterSensor = statuses.waterSensor;
+    if (waterSensor && waterSensor.water)
+        status.waterSensor = waterSensor.water.value;
+    console.log('-------device', status);
     return status;
 }
 

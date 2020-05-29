@@ -19,13 +19,41 @@ button {
 .deviceCell {
     padding: 10px;
     border: 1px gray solid;
+    font-size: 1rem;
+}
+
+.italic {
+    font-style: italic;
+}
+
+.blue {
+    color: blue;
+}
+
+.default-background {
     background-color: bisque;
 }
 
-.closed, .off {
+.red {
+    color: red;
+}
+
+.orange {
+    color: orange;
+}
+
+.closed {
     background-color: pink;
 }
 
-.open, .on {
+.open {
     background-color: lightgreen;
+}
+
+.off {
+    background-color: gray;
+}
+
+.on {
+    background-color: lightgoldenrodyellow;
 }
