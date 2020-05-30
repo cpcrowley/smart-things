@@ -38,8 +38,8 @@ fetch('/devices').then(response => {
             alarmList.push(device);
             deviceOnAList = true;
         } else if (capIdList.includes('switch')) {
-                switchList.push(device);
-            
+            switchList.push(device);
+
             deviceOnAList = true;
         }
         if (capIdList.includes('waterSensor')) {
@@ -71,43 +71,79 @@ fetch('/devices').then(response => {
     console.log('****** fetch call then block ERROR', error);
 });
 
-let idIndexList = [];
+let cellIndexList = [];
+
+//***** Format of "deviceList", "tempList", etc item:
+var deviceListItem = {
+    capIdList: ["battery", "contactSensor", "configuration", "sensor"],
+    deviceId: "1399abd4-736d-4f6f-b565-68bf6ed04907",
+    label: "Front Door",
+    name: "Z-Wave Door/Window Sensor",
+}
+//***** Format of "tempList" item:
+var xxxxx = {
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+function cellContents(label, status, statusColor) {
+    return `<span class="italic">${label}</span>
+    <span class="${statusColor}">${status}</span>`;
+}
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 function cell(background, label, status, statusColor, kindIndex, onClickId) {
     if (!status) status = '';
     if (!statusColor) statusColor = 'blue';
-    let idIndex = idIndexList.length;
-    idIndexList.push(onClickId);
+    let cellIndex = cellIndexList.length;
+    cellIndexList.push({
+        deviceId: onClickId,
+        label: label,
+        status: status,
+        statusColor: statusColor,
+    });
 
-    return `<div class="col deviceCell ${background}"
-    onclick="onClick(${kindIndex},${idIndex});">
-        <span class="italic">${label}</span>
-        <span class="${statusColor}">${status}</span> 
+    return `<div id="cell${cellIndex}" class="col deviceCell ${background}"
+    onclick="onClick(${kindIndex},${cellIndex});">
+         ${cellContents(label, status, statusColor)}
     </div>`;
 }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-function onClick(kindIndex, idIndex) {
-    console.log(`***** onClick: ${kindIndex}: ${idIndex}`);
-    let kind = 'NONE';
-    switch (kindIndex) {
-        case 1: kind = 'temp'; break;
-        case 2: kind = 'light'; break;
-        case 3: kind = 'battery'; break;
-        case 4: kind = 'switch'; break;
-        case 5: kind = 'alarm'; break;
-        case 6: kind = 'sensor'; break;
-    }
-    let id = idIndexList[idIndex];
-    console.log(`***** onClick: ${kind}: ${id}`);
-}
+async function onClick(kindIndex, cellIndex) {
+    let deviceInfo = cellIndexList[cellIndex];
+    let cell = document.getElementById(`cell${cellIndex}`);
 
-/*
-temp = 1
-*/
+    console.log('Get info:', deviceInfo);
+
+    let devicesInfoList = await postData('/statuses', { idList: [deviceInfo] });
+    let statusInfo = devicesInfoList[0];
+    console.log('statusInfo: ', statusInfo);
+
+    let contents = cellContents(deviceInfo.label, status, deviceInfo.statusColor);
+    switch (kindIndex) {
+        case 1: //temp: read again
+            cell.innerHTML = contents;
+            break;
+        case 2: //light: toggle and read again
+            cell.innerHTML = contents;
+            break;
+        case 3: //battery: read again
+            cell.innerHTML = contents;
+            break;
+        case 4: //switch: toggle and read again
+            cell.innerHTML = contents;
+            break;
+        case 5: //alarm: toggle and read again
+            cell.innerHTML = contents;
+            break;
+        case 6: //sensor: read again
+            cell.innerHTML = contents;
+            break;
+    }
+}
 
 //*-----------------------------------------------------------------------------
 //* Define click event handlers for all the buttons.
@@ -189,8 +225,8 @@ currentTabButton = tempsButton;
 //* from: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 //*-----------------------------------------------------------------------------
 async function postData(url = '', data = {}) {
+    console.log('postData: call with', data)
     let json = JSON.stringify(data);
-    // console.log('postData: call with', json)
     // Default options are marked with *
     const response = await fetch(url, {
         method: 'POST', // POST *GET,, PUT, DELETE, etc.
@@ -230,6 +266,7 @@ async function buttonClickHandler(button, idList, makeHtml) {
     </div>`;
 
     let devicesInfoList = await postData('/statuses', { idList: idList });
+    console.log('postData: return:', devicesInfoList);
 
     let html = '';
     devicesInfoList.forEach(device => {

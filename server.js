@@ -31,10 +31,11 @@ app.post("/statuses", async (request, response) => {
     // console.log(`${getETime()}: /statuses: request.body`, request.body)
     let msAtStart = new Date().getTime();
     let idList = request.body.idList;
-    // console.log(`${getETime()}: /statuses; request.body.idList`, idList)
+    console.log(`${getETime()}: /statuses; request.body.idList`, idList)
     let result = await getStatusForDevicesById(idList);
     let ms = new Date().getTime() - msAtStart;
     console.log(`${idList.length} getStutus calls in ${ms} ms`);
+    console.log('/statuses: result:', result);
     response.json(result);
 });
 
@@ -199,19 +200,19 @@ async function getDeviceStatus(deviceId) {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function getStatusForDevicesById(listOfDeviceIds) {
-    // console.log('getStatusForDevicesById: enter');
+    console.log('getStatusForDevicesById: list', listOfDeviceIds);
     let ret = [];
     for (let i = 0; i < listOfDeviceIds.length; ++i) {
         let deviceId = listOfDeviceIds[i].deviceId;
-        // console.log('call getDeviceStatus: ' + deviceId);
+        console.log('call getDeviceStatus: ' + deviceId);
         let status = await getDeviceStatus(deviceId);
-        // console.log('return getDeviceStatus: ' + deviceId);
+        console.log('return getDeviceStatus: ' + deviceId);
         ret.push({
             device: deviceById[deviceId],
             status: status,
         });
     };
-    // console.log('getStatusForDevicesById: return', ret);
+    console.log('getStatusForDevicesById: return', ret);
     return ret;
 }
 
