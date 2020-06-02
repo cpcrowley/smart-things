@@ -16,30 +16,39 @@ var deviceById = {};
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 // make all the files in 'public' available
-// https://expressjs.com/en/starter/static-files.html
 app.use(express.static("public"));
-
-// from: https://scotch.io/tutorials/use-expressjs-to-get-url-and-post-parameters
 var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-//from: https://scotch.io/tutorials/use-expressjs-to-get-url-and-post-parameters
 app.post("/statuses", async (request, response) => {
     // console.log(`${getETime()}: /statuses: request.body`, request.body)
     let msAtStart = new Date().getTime();
     let idList = request.body.idList;
-    console.log(`${getETime()}: /statuses; request.body.idList`, idList)
+    // console.log(`${getETime()}: /statuses; request.body.idList`, idList)
     let result = await getStatusForDevicesById(idList);
     let ms = new Date().getTime() - msAtStart;
     console.log(`${idList.length} getStutus calls in ${ms} ms`);
-    console.log('/statuses: result:', result);
+    // console.log('/statuses: result:', result);
     response.json(result);
 });
 
-// https://expressjs.com/en/starter/basic-routing.html
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/status", (request, response) => {
+    let deviceId = request.query.id;
+    getDeviceStatus(deviceId).then(status => {
+        response.json({
+            device: deviceById[deviceId],
+            status: status,
+        });
+    });
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 app.get("/", (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
 });
@@ -200,19 +209,19 @@ async function getDeviceStatus(deviceId) {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function getStatusForDevicesById(listOfDeviceIds) {
-    console.log('getStatusForDevicesById: list', listOfDeviceIds);
+    // console.log('getStatusForDevicesById: list', listOfDeviceIds);
     let ret = [];
     for (let i = 0; i < listOfDeviceIds.length; ++i) {
         let deviceId = listOfDeviceIds[i].deviceId;
-        console.log('call getDeviceStatus: ' + deviceId);
+        // console.log('call getDeviceStatus: ' + deviceId);
         let status = await getDeviceStatus(deviceId);
-        console.log('return getDeviceStatus: ' + deviceId);
+        // console.log('return getDeviceStatus: ' + deviceId);
         ret.push({
             device: deviceById[deviceId],
             status: status,
         });
     };
-    console.log('getStatusForDevicesById: return', ret);
+    // console.log('getStatusForDevicesById: return', ret);
     return ret;
 }
 
