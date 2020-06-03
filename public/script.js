@@ -154,12 +154,12 @@ var postDataReturnItem = {
 //*----------------------------------------- -----------------------------------
 function cellContents(device, value, kindInfo) {
     return `
-<div class="${kindInfo('backgroundClass', value)}">
+<div class="buttonCell ${kindInfo('backgroundClass', value)}">
 <span class="italic">${encodeLabel(device.label)}</span>
 <span class="${kindInfo('valueClass', value)}">${kindInfo('value', value)}</span>
 </div>
 `;
-}
+} 
 
 //*----------------------------------------- -----------------------------------
 //*----------------------------------------- -----------------------------------
