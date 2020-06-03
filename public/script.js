@@ -54,7 +54,7 @@ var encodeLabelTable = {
 function encodeLabel(label) {
     let codedLabel = encodeLabelTable[label];
     if (codedLabel && codedLabel != label) {
-        console.log(`${label} --> ${codedLabel}`)
+        // console.log(`${label} --> ${codedLabel}`)
         return codedLabel;
     }
     return label;
@@ -151,161 +151,174 @@ var postDataReturnItem = {
 }
 
 //*-----------------------------------------------------------------------------
-//* General: statusToHtml
 //*----------------------------------------- -----------------------------------
-function cellContents(device, className, value) {
-    return `<span class="italic">${encodeLabel(device.label)}</span>
-    <span class="${className}">${value}</span>`;
-}
-function statusToHtml(device, value, className, background, kindIndex) {
-    let id = device.deviceId;
-    let label = device.label;
-    let contents = `<span class="italic">${label}</span>
-    <span class="${className}">${value}</span>`;
-    let cellIndex = cellIndexList.length;
-    cellIndexList.push(id);
+function cellContents(device, value, kindInfo) {
     return `
-<div id="cell${cellIndex}" class="col deviceCell ${background}"
-onclick="onClick(${kindIndex},${cellIndex});">
-    ${contents}
+<div class="${kindInfo('backgroundClass', value)}">
+<span class="italic">${encodeLabel(device.label)}</span>
+<span class="${kindInfo('valueClass', value)}">${kindInfo('value', value)}</span>
 </div>
 `;
+}
+
+//*----------------------------------------- -----------------------------------
+//*----------------------------------------- -----------------------------------
+function statusToHtml(device, value, kindInfo, kindIndex) {
+    let cellIndex = cellIndexList.length;
+    cellIndexList.push(device.deviceId);
+    let ret = `
+<div id="cell${cellIndex}" class="col deviceCell"
+onclick="onClick(${kindIndex},${cellIndex});">
+    ${cellContents(device, value, kindInfo)}
+</div>
+`;
+    return ret;
 }
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 async function onClick(kindIndex, cellIndex) {
-    let id = cellIndexList[cellIndex];
-    let device = idToDevice[id]
+    let deviceId = cellIndexList[cellIndex];
+    let device = idToDevice[deviceId]
     let cell = document.getElementById(`cell${cellIndex}`);
 
-    // let msAtStart = new Date().getTime();
     let devicesInfoList = await postData('/statuses', { idList: [device] });
-    // console.log(`/statuses: ${new Date().getTime() - msAtStart} ms`);
     let statusInfo = devicesInfoList[0];
-    // console.log('statusInfo: ', statusInfo);
-    let value, innerHTML;
+    let innerHTML, args, response, currentStatus, toggledStatus;
 
     switch (kindIndex) {
         case 1: //temp: read again
-            value = statusInfo.status.temp;
-            innerHTML =
-                cellContents(statusInfo.device, tempClassName(value), value);
+            innerHTML = cellContents(statusInfo.device,
+                statusInfo.status.temp, tempInfo);
             break;
         case 2: //light: toggle and read again
-            // cell.innerHTML = contents;
+            currentStatus = statusInfo.status.light;
+            toggledStatus = currentStatus == 'on' ? 'off' : 'on';
+            innerHTML = cellContents(statusInfo.device, toggledStatus, lightInfo);
+            args = {
+                deviceId: deviceId,
+                capability: "switch",
+                command: toggledStatus 
+            };
+            console.log('call /command:', args);
+            response = await postData('/command', args);
+            console.log('response:', response);
             break;
         case 3: //battery: read again
-            // cell.innerHTML = contents;
+            innerHTML = cellContents(statusInfo.device,
+                statusInfo.status.battery, batteryInfo);
             break;
-        case 4: //switch: toggle and read again
-            // cell.innerHTML = contents;
-            break;
+        // case 4: //switch: toggle and read again
+        //     innerHTML = cellContents(statusInfo.device,
+        //         statusInfo.status.light, lightsInfo);
+        //     break;
         case 5: //alarm: toggle and read again
-            // cell.innerHTML = contents;
+            innerHTML = cellContents(statusInfo.device,
+                statusInfo.status.alarm, alarmInfo);
             break;
         case 6: //sensor: read again
-            // cell.innerHTML = contents;
+            innerHTML = cellContents(statusInfo.device,
+                statusInfo.status.contactSensor, sensorInfo);
             break;
     }
-    console.log('innerHTML: ' + innerHTML);
     cell.innerHTML = innerHTML;
 }
-
-
 
 //*-----------------------------------------------------------------------------
 //* temp
 //*-----------------------------------------------------------------------------
-const tempButton = document.getElementById("tempsButton");
-function tempClassName(value) {
-    return parseInt(value) > 89 ? 'red' : 'blue';
+function tempInfo(kind, value) {
+    switch (kind) {
+        case 'value': return value;
+        case 'valueClass': return parseInt(value) > 89 ? 'red' : 'blue';
+        case 'backgroundClass': return 'default-background';
+        default: return null;
+    }
 }
+const tempButton = document.getElementById("tempsButton");
 tempButton.addEventListener('click', () => {
     return buttonClickHandler(tempButton, tempList, deviceStatus => {
-        let value = deviceStatus.status.temp;
-        return statusToHtml(
-            deviceStatus.device,
-            value,
-            tempClassName(value),
-            'default-background', 1
-        );
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.temp, tempInfo, 1);
     })
 });
 
 //*-----------------------------------------------------------------------------
-//* lights
+//* light
 //*-----------------------------------------------------------------------------
-const lightsButton = document.getElementById("lightsButton");
-lightsButton.addEventListener('click', async () => {
-    return buttonClickHandler(lightsButton, lightList, deviceStatus => {
-        // deviceStatus: {device: deviceInfo, status: { lights: degrees"}}
-        let device = deviceStatus.device;
-        let value = deviceStatus.status.light;
-        let className = value == 'on' ? '&#9728;' : '🚫';
-        return statusToHtml(device.deviceId, device.label, value, className,
-            value, 2);
-    })
-});
-
-//*-----------------------------------------------------------------------------
-//* batteries
-//*-----------------------------------------------------------------------------
-function batteriesToContents(label, batteries) {
-    return cellContents(label, batteries, color);
+function lightInfo(kind, value) {
+    switch (kind) {
+        case 'value': return value == 'on' ? '&#9728;' : '🚫';
+        case 'valueClass': return value;
+        case 'backgroundClass': return value;
+        default: return null;
+    }
 }
-const batteriesButton = document.getElementById("batteriesButton");
-batteriesButton.addEventListener('click', async () => {
-    return buttonClickHandler(batteriesButton, batteryList, deviceStatus => {
-        // deviceStatus: {device: deviceInfo, status: { battery: pct}}
-        let device = deviceStatus.device;
-        let value = deviceStatus.status.battery;
-        let percent = parseInt(value);
-        let className = 'blue';
-        if (percent < 50) className = 'red';
-        else if (percent < 75) className = 'orange';
-        return statusToHtml(device.deviceId, device.label, value, className,
-            'default-background', 3);
+const lightButton = document.getElementById("lightsButton");
+lightButton.addEventListener('click', async () => {
+    return buttonClickHandler(lightButton, lightList, deviceStatus => {
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.light, lightInfo, 2);
     })
 });
 
 //*-----------------------------------------------------------------------------
-//* alarms
+//* battery
 //*-----------------------------------------------------------------------------
-const alarmsButton = document.getElementById("alarmsButton");
+function batteryInfo(kind, value) {
+    let percent = parseInt(value);
+    switch (kind) {
+        case 'value': return value;
+        case 'valueClass': return percent < 50 ? 'red'
+            : (percent < 75 ? 'orange' : 'blue');
+        case 'backgroundClass': return 'default-background';
+        default: return null;
+    }
+}
+const batteryButton = document.getElementById("batteriesButton");
+batteryButton.addEventListener('click', async () => {
+    return buttonClickHandler(batteryButton, batteryList, deviceStatus => {
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.battery, batteryInfo, 3);
+    })
+});
+
+//*-----------------------------------------------------------------------------
+//* alarm
+//*-----------------------------------------------------------------------------
+function alarmInfo(kind, value) {
+    switch (kind) {
+        case 'value': return value == 'on' ? '🔔' : '🔕';
+        case 'valueClass': return 'blue';
+        case 'backgroundClass': return 'default-background';
+        default: return null;
+    }
+}
+const alarmButton = document.getElementById("alarmsButton");
 alarmsButton.addEventListener('click', async () => {
-    return buttonClickHandler(lightsButton, lightList, deviceStatus => {
-        // deviceStatus: {device: deviceInfo, status: { ...}}
-        let device = deviceStatus.device;
-        let value = deviceStatus.status.alarm;
-        let className = value == 'on' ? '🔔' : '🔕';
-        return statusToHtml(device.deviceId, device.label, value, className,
-            'default-background', 5);
+    return buttonClickHandler(alarmButton, alarmList, deviceStatus => {
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.alarm, alarmInfo, 5);
     })
 });
 
 
 //*-----------------------------------------------------------------------------
-//* sensors
+//* sensor
 //*-----------------------------------------------------------------------------
-function sensorsToContents(label, sensors) {
-    let color = parseInt(sensors) > 89 ? 'red' : 'blue';
-    return cellContents(label, sensors, color);
-}
-function sensorsStatusToHtml(id, label, sensors) {
-    let contents = sensorsToContents(label, sensors);
-    let html = cell('default-background', 6, id, contents);
-    return html;
+function sensorInfo(kind, value) {
+    switch (kind) {
+        case 'value': return value;
+        case 'valueClass': return 'blue';
+        case 'backgroundClass': return value;
+        default: return null;
+    }
 }
 const sensorsButton = document.getElementById("sensorsButton");
 sensorsButton.addEventListener('click', async () => {
-    return buttonClickHandler(sensorsButton, contactSensorList, statusInfo => {
-        // deviceStatus: {device: deviceInfo, status: { contactSensor: "open"}}
-        let id = statusInfo.device.deviceId;
-        let contactSensor = statusInfo.status.contactSensor;
-        let label = statusInfo.device.label;
-        // console.log(`sensor ${label} ${contactSensor}`)
-        return cell(contactSensor, label, '', 'blue', 6, id);
+    return buttonClickHandler(sensorsButton, contactSensorList, deviceStatus => {
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.contactSensor, sensorInfo, 6);
     })
 });
 
@@ -318,25 +331,38 @@ currentTabButton = tempButton;
 //* from: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 //*-----------------------------------------------------------------------------
 async function postData(url = '', data = {}) {
-    // console.log('postData: call with', data)
     let json = JSON.stringify(data);
     // Default options are marked with *
-    const response = await fetch(url, {
-        method: 'POST', // POST *GET,, PUT, DELETE, etc.
-        mode: 'cors', // no-cors, *cors, same-origin
-        cache: 'no-cache', // no-cache *default,, reload, force-cache, only-if-cached
-        credentials: 'same-origin', // include, *same-origin, omit
-        headers: {
-            'Content-Type': 'application/json'
-            // 'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        redirect: 'follow', // manual, *follow, error
-        referrerPolicy: 'no-referrer', // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
-        body: json // body data type must match "Content-Type" header
-    });
-    // console.log('postData: return with', response);
+    // console.log(`call postData: ${json}`);
+    let response = { status: 99, text: 'none' };
+    try {
+        response = await fetch(url, {
+            method: 'POST',
+            // POST *GET,, PUT, DELETE, etc.
+            mode: 'cors',
+            // no-cors, *cors, same-origin
+            cache: 'no-cache',
+            // no-cache *default,, reload, force-cache, only-if-cached
+            credentials: 'same-origin',
+            // include, *same-origin, omit
+            headers: {
+                'Content-Type': 'application/json'
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            redirect: 'follow',
+            // manual, *follow, error
+            referrerPolicy: 'no-referrer',
+            // no-referrer, *no-referrer-when-downgrade, origin, origin-when-cross-origin, same-origin, strict-origin, strict-origin-when-cross-origin, unsafe-url
+            body: json
+            // body data type must match "Content-Type" header
+        });
+    } catch (error) {
+        console.log(`ERROR postData: ${error}`, error);
+        response = { status: 88, text: error.toString() };
+    }
     json = response.json();
-    // console.log('postData: return as JSON', json);
+    // console.log(`return postData: ${json}`);
+
     return json; // parses JSON response into native JavaScript objects
 }
 
@@ -359,10 +385,10 @@ async function buttonClickHandler(button, idList, makeHtml) {
     </div>`;
 
     let devicesStatusList = await postData('/statuses', { idList: idList });
-    // console.log('postData: return:', devicesInfoList);
 
     let html = '';
     devicesStatusList.forEach(deviceStatus => {
+        console.log('deviceStatus:', deviceStatus);
         deviceStatus.device.label = encodeLabel(deviceStatus.device.label);
         let newHtml = makeHtml(deviceStatus);
         if (newHtml) html += newHtml;

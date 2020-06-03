@@ -37,14 +37,28 @@ app.post("/statuses", async (request, response) => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-app.get("/status", (request, response) => {
-    let deviceId = request.query.id;
-    getDeviceStatus(deviceId).then(status => {
+app.post("/command", (request, response) => {
+    console.log('/command:', request.query);
+    let command = {
+        capability: request.body.capability,
+        command: request.body.command
+    }
+    console.log('/command:', command);
+    if (request.body.capability) {
+        client.devices.executeCommand(request.body.deviceId, command).then(
+            status => {
+                console.log('/command: response:', status);
+                response.json({
+                    status: status
+                });
+            }
+        );
+    } else {
         response.json({
-            device: deviceById[deviceId],
-            status: status,
+            status: 777,
+            text: 'Bad args'
         });
-    });
+    }
 });
 
 //*-----------------------------------------------------------------------------
