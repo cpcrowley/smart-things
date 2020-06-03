@@ -19,11 +19,16 @@ button {
 .deviceCell {
     border: 1px #bbb solid;
     font-size: 1rem;
+    display: inline-block;
+    max-width: 10rem;
+    min-height: 6rem;
 }
 
 .buttonCell {
     padding: 10px;
-    max-width: 60rem;
+    display: inline-block;
+    max-width: 10rem;
+    min-height: 6rem;
 }
 
 .italic {
