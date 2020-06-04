@@ -21,14 +21,14 @@ button {
     font-size: 1rem;
     display: inline-block;
     max-width: 10rem;
-    min-height: 6rem;
+    min-height: 4rem;
 }
 
 .buttonCell {
     padding: 10px;
     display: inline-block;
     max-width: 10rem;
-    min-height: 6rem;
+    min-height: 4rem;
 }
 
 .italic {
@@ -37,6 +37,14 @@ button {
 
 .blue {
     color: blue;
+}
+
+.normalWeight {
+    font-weight: 'normal';
+}
+
+.boldWeight {
+    font-weight: 'bold';
 }
 
 .default-background {

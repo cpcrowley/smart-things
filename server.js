@@ -6,6 +6,7 @@ const PAT = 'd2856d93-cb36-46e2-a49f-c9a4b4b166e9';
 const PORT = 3344;
 const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 // const client = new SmartThingsClient(new BearerTokenAuthenticator(process.env.PAT))
+var savedLocationId = null;
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -30,7 +31,7 @@ app.post("/statuses", async (request, response) => {
     // console.log(`${getETime()}: /statuses; request.body.idList`, idList)
     let result = await getStatusForDevicesById(idList);
     let ms = new Date().getTime() - msAtStart;
-    console.log(`${idList.length} getStutus calls in ${ms} ms`);
+    console.log(`${idList.length} getStatus calls in ${ms} ms`);
     // console.log('/statuses: result:', result);
     response.json(result);
 });
@@ -38,12 +39,12 @@ app.post("/statuses", async (request, response) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.post("/command", (request, response) => {
-    console.log('/command:', request.query);
+    // console.log('/command:', request.query);
     let command = {
         capability: request.body.capability,
         command: request.body.command
     }
-    console.log('/command:', command);
+    // console.log('/command:', command);
     if (request.body.capability) {
         client.devices.executeCommand(request.body.deviceId, command).then(
             status => {
@@ -95,7 +96,9 @@ function processDeviceList(l) {
 async function getDeviceList() {
     if (!savedRawDeviceList) {
         let list = await client.devices.list();
-        savedLocationId = list[0].locationId;
+        if (!savedLocationId) {
+            savedLocationId = list[0].locationId;
+        }
         savedRawDeviceList = list;
         savedDeviceList = processDeviceList(list);
         savedDeviceList.forEach(device => {
@@ -116,8 +119,42 @@ app.get("/rawdevices", async (request, response) => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
+app.post("/setMode", async (request, response) => {
+    let newMode = request.body.newMode;
+    console.log(`/setMode call, request.body:`, request.body);
+    console.log(`call modes.setCurrent(${newMode},${savedLocationId})`);
+    client.modes.setCurrent(newMode, savedLocationId).then(status => {
+        response.json({
+            status: status
+        });
+    });
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.post("/getMode", async (request, response) => {
+    client.modes.getCurrent(savedLocationId).then(ret => {
+        console.log('modes.getCurrent:', ret);
+        response.json({
+            mode: ret.label
+        });
+    });
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/modeList", async (request, response) => {
+    console.log('/modeList called: try client.modes.list:', savedLocationId);
+    client.modes.list(savedLocationId).then(ret => {
+        console.log('/listModes: modes.list:', ret);
+        response.json(ret);
+    });
+});
+
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
 app.get("/devices", async (request, response) => {
-    // console.log(`${getETime()}: /devices called`);
     let msAtStart = new Date().getTime();
     await getDeviceList();
     let ms = new Date().getTime() - msAtStart;
@@ -136,11 +173,6 @@ async function getStatus(id) {
     return status;
 }
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-// app.get("/status", async (request, response) => {
-//     response.json(getStatus(request.query.id));
-// });
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -238,6 +270,8 @@ async function getStatusForDevicesById(listOfDeviceIds) {
     // console.log('getStatusForDevicesById: return', ret);
     return ret;
 }
+
+
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
