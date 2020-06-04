@@ -120,10 +120,11 @@ app.get("/rawdevices", async (request, response) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.post("/setMode", async (request, response) => {
-    let newMode = request.body.newMode;
+    let newModeId = request.body.newModeId;
     console.log(`/setMode call, request.body:`, request.body);
-    console.log(`call modes.setCurrent(${newMode},${savedLocationId})`);
-    client.modes.setCurrent(newMode, savedLocationId).then(status => {
+    console.log(`call modes.setCurrent(${newModeId},${savedLocationId})`);
+    client.modes.setCurrent(newModeId, savedLocationId).then(status => {
+        console.log(`modes.setCurrent returned:`, status);
         response.json({
             status: status
         });
@@ -144,9 +145,9 @@ app.post("/getMode", async (request, response) => {
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 app.get("/modeList", async (request, response) => {
-    console.log('/modeList called: try client.modes.list:', savedLocationId);
+    // console.log('/modeList called: try client.modes.list:', savedLocationId);
     client.modes.list(savedLocationId).then(ret => {
-        console.log('/listModes: modes.list:', ret);
+        // console.log('/listModes: modes.list:', ret);
         response.json(ret);
     });
 });
