@@ -115,7 +115,7 @@ fetch('/devices').then(response => {
         let json = response.json();
         return json;
     }).then(rawModelist => {
-        console.log('/modeList: rawModelist:', rawModelist);
+        // console.log('/modeList: rawModelist:', rawModelist);
         modeList = [];
         rawModelist.forEach(item => {
             let deviceId = item.id;
@@ -123,7 +123,7 @@ fetch('/devices').then(response => {
             idToDevice[deviceId] = device;
             modeList.push(device);
         });
-        console.log('/modeList --> modeList', modeList)
+        // console.log('/modeList --> modeList', modeList)
         currentTabButton = modeButton;
         modeButton.click();
     });
@@ -183,7 +183,7 @@ ${kindInfo('value', value, device)}</span>
 function statusToHtml(device, value, kindInfo, kindIndex) {
     let cellIndex = cellIndexList.length;
     cellIndexList.push(device.deviceId);
-    console.log(`statusToHtml: cellIndex: ${cellIndex} deviceId: ${device.deviceId} device, cellIndexList:`, device, cellIndexList);
+    // console.log(`statusToHtml: cellIndex: ${cellIndex} deviceId: ${device.deviceId} device, cellIndexList:`, device, cellIndexList);
     let ret = `
 <div id="cell${cellIndex}" class="col deviceCell"
 onclick="onClick(${kindIndex},${cellIndex});">
@@ -198,7 +198,7 @@ onclick="onClick(${kindIndex},${cellIndex});">
 async function onClick(kindIndex, cellIndex) {
     let deviceId = cellIndexList[cellIndex];
     let device = idToDevice[deviceId];
-    console.log(`cellIndex: ${cellIndex} deviceId: ${deviceId} device:`, device);
+    // console.log(`cellIndex: ${cellIndex} deviceId: ${deviceId} device:`, device);
     let cell = document.getElementById(`cell${cellIndex}`);
 
     let devicesInfoList;
@@ -215,7 +215,7 @@ async function onClick(kindIndex, cellIndex) {
     switch (kindIndex) {
         case 7: //mode: set mode
             args = { newModeId: device.deviceId };
-            console.log('onClick(7:mode): device,args', device, args);
+            // console.log('onClick(7:mode): device,args', device, args);
             await postData('/setMode', args);
             modeButton.click();
             break;
@@ -448,14 +448,14 @@ async function buttonClickHandler(button, idList, makeHtml) {
     if (idList == modeList) {
         let modeInfo = await postData('/getMode', {});
         let mode = modeInfo.mode;
-        console.log('mode: ' + modeInfo.mode);
+        // console.log('/getMode: ' + modeInfo.mode);
         devicesStatusList = modeList.map(device => {
             return {
                 device: device,
                 status: { mode: modeInfo.mode}
             }
         });
-        console.log('mode: ' + modeInfo.mode, devicesStatusList);
+        // console.log('mode: ' + modeInfo.mode, devicesStatusList);
     } else {
         devicesStatusList = await postData('/statuses', { idList: idList });
 
