@@ -18,8 +18,10 @@ let loadingIgnoreButtons = false;
 let cellIndexList = [];
 
 //*-----------------------------------------------------------------------------
-//* Fetch the device list
+//* Initialization
 //*-----------------------------------------------------------------------------
+
+//* Fetch the device list
 fetch('/devices').then(response => {
     return response.json();
 }).then(devicesInfoList => {
@@ -79,7 +81,6 @@ fetch('/devices').then(response => {
         modeButton.click();
     });
 
-
     let byLabel = (a, b) => a.label.localeCompare(b.label);
     contactSensorList.sort(byLabel);
     batteryList.sort(byLabel);
@@ -93,8 +94,6 @@ fetch('/devices').then(response => {
 }).catch(error => {
     console.log('****** fetch call then block ERROR', error);
 });
-
-
 
 
 //*-----------------------------------------------------------------------------
@@ -116,14 +115,22 @@ function statusToHtml(device, value, kindInfo, kindIndex) {
     cellIndexList.push(device.deviceId);
     let ret = `
 <div id="cell${cellIndex}" class="col deviceCell"
-onclick="onClick(${kindIndex},${cellIndex});">
-    ${cellContents(device, value, kindInfo)}
+        onclick="onClick(${kindIndex},${cellIndex});">
+    <div class="buttonCell ${kindInfo('backgroundClass', value, device)}">
+        <span class="italic">
+            ${encodeLabel(device.label)}
+        </span>
+        <span class="${kindInfo('valueClass', value, device)}">
+                ${kindInfo('value', value, device)}
+        </span>
+    </div>
 </div>
 `;
     return ret;
 }
 
 //*-----------------------------------------------------------------------------
+//* general handler for all clicks on cells.
 //*-----------------------------------------------------------------------------
 async function onClick(kindIndex, cellIndex) {
     let deviceId = cellIndexList[cellIndex];
@@ -138,7 +145,7 @@ async function onClick(kindIndex, cellIndex) {
     } else {
         devicesInfoList = await postData('/statuses', { idList: [device] });
         statusInfo = devicesInfoList[0];
-    } 
+    }
 
     let innerHTML, args, currentStatus, toggledStatus;
 
@@ -150,13 +157,20 @@ async function onClick(kindIndex, cellIndex) {
             modeButton.click();
             break;
         case 1: //temp: read again
-            innerHTML = cellContents(statusInfo.device,
-                statusInfo.status.temp, tempInfo);
+            innerHTML = cellContents(
+                statusInfo.device,
+                statusInfo.status.temp,
+                tempInfo
+            );
             break;
         case 2: //light: toggle and read again
             currentStatus = statusInfo.status.light;
             toggledStatus = currentStatus == 'on' ? 'off' : 'on';
-            innerHTML = cellContents(statusInfo.device, toggledStatus, lightInfo);
+            innerHTML = cellContents(
+                statusInfo.device,
+                toggledStatus,
+                lightInfo
+            );
             args = {
                 deviceId: deviceId,
                 capability: "switch",
@@ -165,16 +179,25 @@ async function onClick(kindIndex, cellIndex) {
             response = await postData('/command', args);
             break;
         case 3: //battery: read again
-            innerHTML = cellContents(statusInfo.device,
-                statusInfo.status.battery, batteryInfo);
+            innerHTML = cellContents(
+                statusInfo.device,
+                statusInfo.status.battery,
+                batteryInfo
+            );
             break;
         case 5: //alarm: toggle and read again
-            innerHTML = cellContents(statusInfo.device,
-                statusInfo.status.alarm, alarmInfo);
+            innerHTML = cellContents(
+                statusInfo.device,
+                statusInfo.status.alarm,
+                alarmInfo
+            );
             break;
         case 6: //sensor: read again
-            innerHTML = cellContents(statusInfo.device,
-                statusInfo.status.contactSensor, sensorInfo);
+            innerHTML = cellContents(
+                statusInfo.device,
+                statusInfo.status.contactSensor,
+                sensorInfo
+            );
             break;
     }
     cell.innerHTML = innerHTML;
@@ -302,6 +325,65 @@ sensorsButton.addEventListener('click', async () => {
 
 
 //*-----------------------------------------------------------------------------
+//* button click handler common code.
+//*-----------------------------------------------------------------------------
+async function buttonClickHandler(button, idList, makeHtml) {
+    if (loadingIgnoreButtons) return;
+    let msAtStart = new Date().getTime();
+
+    if (currentTabButton) {
+        currentTabButton.classList.remove('active');
+    }
+    button.classList.add('active');
+    currentTabButton = button;
+    let savedLabel = button.innerHTML;
+
+    loadingIgnoreButtons = true;
+    button.innerHTML = 'Loading&hellip;';
+    rowOfDevices.innerHTML = `<div class="spinner-border" role="status">
+    <span class="sr-only">Loading&hellip;</span>
+    </div>`;
+
+    let devicesStatusList;
+    if (idList == modeList) {
+        let modeInfo = await postData('/getMode', {});
+        let mode = modeInfo.mode;
+        // console.log('/getMode: ' + modeInfo.mode);
+        devicesStatusList = modeList.map(device => {
+            return {
+                device: device,
+                status: { mode: modeInfo.mode }
+            }
+        });
+        // console.log('mode: ' + modeInfo.mode, devicesStatusList);
+    } else {
+        devicesStatusList = await postData('/statuses', { idList: idList });
+
+        // Put the open sensors first
+        if (devicesStatusList.length > 0) {
+            if (devicesStatusList[0].status.contactSensor) {
+                devicesStatusList.sort(opensFirst);
+            }
+        }
+    }
+
+    let html = '';
+    devicesStatusList.forEach(deviceStatus => {
+        // console.log('deviceStatus:', deviceStatus);
+        deviceStatus.device.label = encodeLabel(deviceStatus.device.label);
+        let newHtml = makeHtml(deviceStatus);
+        if (newHtml) html += newHtml;
+    });
+    rowOfDevices.innerHTML = html;
+
+    button.innerHTML = savedLabel;
+    loadingIgnoreButtons = false;
+    console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
+}
+
+
+
+//*-----------------------------------------------------------------------------
 //* from: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 //*-----------------------------------------------------------------------------
 async function postData(url = '', data = {}) {
@@ -340,65 +422,6 @@ async function postData(url = '', data = {}) {
     return json; // parses JSON response into native JavaScript objects
 }
 
-
-//*-----------------------------------------------------------------------------
-//* button click handler common code.
-//*-----------------------------------------------------------------------------
-async function buttonClickHandler(button, idList, makeHtml) {
-    if (loadingIgnoreButtons) return;
-    let msAtStart = new Date().getTime();
-
-    if (currentTabButton) {
-        currentTabButton.classList.remove('active');
-    }
-    button.classList.add('active');
-    currentTabButton = button;
-    let savedLabel = button.innerHTML;
-
-    loadingIgnoreButtons = true;
-    button.innerHTML = 'Loading&hellip;';
-    rowOfDevices.innerHTML = `<div class="spinner-border" role="status">
-    <span class="sr-only">Loading&hellip;</span>
-    </div>`;
-
-    let devicesStatusList;
-    if (idList == modeList) {
-        let modeInfo = await postData('/getMode', {});
-        let mode = modeInfo.mode;
-        // console.log('/getMode: ' + modeInfo.mode);
-        devicesStatusList = modeList.map(device => {
-            return {
-                device: device,
-                status: { mode: modeInfo.mode}
-            }
-        });
-        // console.log('mode: ' + modeInfo.mode, devicesStatusList);
-    } else {
-        devicesStatusList = await postData('/statuses', { idList: idList });
-
-        // Put the open sensors first
-        if (devicesStatusList.length > 0) {
-            if (devicesStatusList[0].status.contactSensor) {
-                devicesStatusList.sort(opensFirst);
-            }
-        }
-    }
-
-    let html = '';
-    devicesStatusList.forEach(deviceStatus => {
-        // console.log('deviceStatus:', deviceStatus);
-        deviceStatus.device.label = encodeLabel(deviceStatus.device.label);
-        let newHtml = makeHtml(deviceStatus);
-        if (newHtml) html += newHtml;
-    });
-    rowOfDevices.innerHTML = html;
-
-    button.innerHTML = savedLabel;
-    loadingIgnoreButtons = false;
-    console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
-}
-
-
 //*-----------------------------------------------------------------------------
 //* comparison function for sorting
 //*-----------------------------------------------------------------------------
@@ -408,7 +431,7 @@ function opensFirst(a, b) {
     let bSensor = b.status.contactSensor;
     if (aSensor == 'open') return bSensor == 'open' ? 0 : -1;
     return bSensor == 'open' ? 0 : 1;
-} 
+}
 
 //*-----------------------------------------------------------------------------
 //* look up names in the above table.
