@@ -1,10 +1,11 @@
 {
-  "name": "ccsmartthings",
+  "name": "smart-things",
   "version": "1.0.0",
   "description": "Use Smart Things Javascript SDK",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "watch": "nodemon server.js"
   },
   "engines": {
     "node": "12.x"
@@ -17,5 +18,6 @@
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "nodemon": "^2.0.4"
   }
 }

@@ -3,13 +3,10 @@ const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/co
 const express = require("express");
 const app = express();
 
-const PAT = 'd2856d93-cb36-46e2-a49f-c9a4b4b166e9';
-const PORT = 3344;
+const PORT = 3000;
 // const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 const client = new SmartThingsClient(new BearerTokenAuthenticator(process.env.PAT))
 var savedLocationId = null;
-
-console.log('PAT=' + PAT);
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
