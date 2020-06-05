@@ -95,22 +95,35 @@ fetch('/devices').then(response => {
     console.log('****** fetch call then block ERROR', error);
 });
 
-
-//*-----------------------------------------------------------------------------
-//*----------------------------------------- -----------------------------------
-function cellContents(device, value, kindInfo) {
-    return `
-<div class="buttonCell ${kindInfo('backgroundClass', value, device)}">
-<span class="italic">${encodeLabel(device.label)}</span>
-<span class="${kindInfo('valueClass', value, device)}">
-${kindInfo('value', value, device)}</span>
-</div>
-`;
-}
+const ModeIndex = 7;
+const DoorsAndWindowIndex = 6;
+const AlarmIndex = 5;
+const WaterSensorIndex = 4;
+const BatteryIndex = 3;
+const LightIndex = 2;
+const TempIndex = 1;
 
 //*----------------------------------------- -----------------------------------
 //*----------------------------------------- -----------------------------------
 function statusToHtml(device, value, kindInfo, kindIndex) {
+    let cellIndex = cellIndexList.length;
+    cellIndexList.push(device.deviceId);
+    let backgroundClass = kindInfo('backgroundClass', value, device);
+    let ret = `
+<div id="cell${cellIndex}" class="rowCell ${backgroundClass}"
+        onclick="onClick(${kindIndex},${cellIndex});">
+    <span class="italic">
+        ${encodeLabel(device.label)}
+    </span>
+    <br/>
+    <span class="${kindInfo('valueClass', value, device)}">
+            ${kindInfo('value', value, device)}
+    </span>
+</div>
+`;
+    return ret;
+}
+function statusToHtmlBootstrap(device, value, kindInfo, kindIndex) {
     let cellIndex = cellIndexList.length;
     cellIndexList.push(device.deviceId);
     let ret = `
@@ -129,78 +142,58 @@ function statusToHtml(device, value, kindInfo, kindIndex) {
     return ret;
 }
 
+
 //*-----------------------------------------------------------------------------
 //* general handler for all clicks on cells.
 //*-----------------------------------------------------------------------------
 async function onClick(kindIndex, cellIndex) {
     let deviceId = cellIndexList[cellIndex];
     let device = idToDevice[deviceId];
-    // console.log(`cellIndex: ${cellIndex} deviceId: ${deviceId} device:`, device);
-    let cell = document.getElementById(`cell${cellIndex}`);
 
     let devicesInfoList;
     let statusInfo;
-    if (kindIndex == 7) {
+    if (kindIndex == ModeIndex) {
         statusInfo = await postData('/getMode', {});
     } else {
         devicesInfoList = await postData('/statuses', { idList: [device] });
         statusInfo = devicesInfoList[0];
     }
 
-    let innerHTML, args, currentStatus, toggledStatus;
+    // let args, currentStatus, toggledStatus;
 
     switch (kindIndex) {
-        case 7: //mode: set mode
+        case ModeIndex: // set mode
             args = { newModeId: device.deviceId };
-            // console.log('onClick(7:mode): device,args', device, args);
             await postData('/setMode', args);
             modeButton.click();
             break;
-        case 1: //temp: read again
-            innerHTML = cellContents(
-                statusInfo.device,
-                statusInfo.status.temp,
-                tempInfo
-            );
+        case TempIndex: // read again
+            tempButton.click();
             break;
-        case 2: //light: toggle and read again
+        case LightIndex: // toggle and read again
             currentStatus = statusInfo.status.light;
             toggledStatus = currentStatus == 'on' ? 'off' : 'on';
-            innerHTML = cellContents(
-                statusInfo.device,
-                toggledStatus,
-                lightInfo
-            );
             args = {
                 deviceId: deviceId,
                 capability: "switch",
                 command: toggledStatus
             };
             response = await postData('/command', args);
+            lightButton.click();
             break;
-        case 3: //battery: read again
-            innerHTML = cellContents(
-                statusInfo.device,
-                statusInfo.status.battery,
-                batteryInfo
-            );
+        case BatteryIndex: // read again
+            batteryButton.click();
             break;
-        case 5: //alarm: toggle and read again
-            innerHTML = cellContents(
-                statusInfo.device,
-                statusInfo.status.alarm,
-                alarmInfo
-            );
+        case AlarmIndex: // toggle and read again
+            alarmButton.click();
             break;
-        case 6: //sensor: read again
-            innerHTML = cellContents(
-                statusInfo.device,
-                statusInfo.status.contactSensor,
-                sensorInfo
-            );
+        case DoorsAndWindowIndex: // read again
+            doorAndWindowButton.click();
+            break;
+        case WaterSensorIndex: // read again
+            waterSensorButton.click();
             break;
     }
-    cell.innerHTML = innerHTML;
 }
 
 //*-----------------------------------------------------------------------------
@@ -221,7 +214,7 @@ const modeButton = document.getElementById("modeButton");
 modeButton.addEventListener('click', () => {
     return buttonClickHandler(modeButton, modeList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.mode, modeInfo, 7);
+            deviceStatus.status.mode, modeInfo, ModeIndex);
     })
 });
 
@@ -230,7 +223,7 @@ modeButton.addEventListener('click', () => {
 //*-----------------------------------------------------------------------------
 function tempInfo(kind, value) {
     switch (kind) {
-        case 'value': return value;
+        case 'value': return value || 'offline';
         case 'valueClass': return parseInt(value) > 89 ? 'red' : 'blue';
         case 'backgroundClass': return 'default-background';
         default: return null;
@@ -240,7 +233,7 @@ const tempButton = document.getElementById("tempButton");
 tempButton.addEventListener('click', () => {
     return buttonClickHandler(tempButton, tempList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.temp, tempInfo, 1);
+            deviceStatus.status.temp, tempInfo, TempIndex);
     })
 });
 
@@ -249,7 +242,7 @@ tempButton.addEventListener('click', () => {
 //*-----------------------------------------------------------------------------
 function lightInfo(kind, value) {
     switch (kind) {
-        case 'value': return ''; //value == 'on' ? '&#9728;' : '🚫';
+        case 'value': return value || 'offline'; //value == 'on' ? '&#9728;' : '🚫';
         case 'valueClass': return value;
         case 'backgroundClass': return value;
         default: return null;
@@ -259,7 +252,7 @@ const lightButton = document.getElementById("lightButton");
 lightButton.addEventListener('click', async () => {
     return buttonClickHandler(lightButton, lightList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.light, lightInfo, 2);
+            deviceStatus.status.light, lightInfo, LightIndex);
     })
 });
 
@@ -269,7 +262,7 @@ lightButton.addEventListener('click', async () => {
 function batteryInfo(kind, value) {
     let percent = parseInt(value);
     switch (kind) {
-        case 'value': return value;
+        case 'value': return value || 'offline';
         case 'valueClass': return percent < 50 ? 'red'
             : (percent < 75 ? 'orange' : 'blue');
         case 'backgroundClass': return 'default-background';
@@ -280,7 +273,7 @@ const batteryButton = document.getElementById("batteryButton");
 batteryButton.addEventListener('click', async () => {
     return buttonClickHandler(batteryButton, batteryList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.battery, batteryInfo, 3);
+            deviceStatus.status.battery, batteryInfo, BatteryIndex);
     })
 });
 
@@ -299,27 +292,46 @@ const alarmButton = document.getElementById("alarmButton");
 alarmButton.addEventListener('click', async () => {
     return buttonClickHandler(alarmButton, alarmList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.alarm, alarmInfo, 5);
+            deviceStatus.status.alarm, alarmInfo, AlarmIndex);
     })
 });
 
 
 //*-----------------------------------------------------------------------------
-//* sensor
+//* contactSensor
 //*-----------------------------------------------------------------------------
 function sensorInfo(kind, value) {
     switch (kind) {
-        case 'value': return ''; //value;
+        case 'value': return value || 'offline';
         case 'valueClass': return 'blue';
         case 'backgroundClass': return value;
         default: return null;
     }
 }
-const sensorsButton = document.getElementById("sensorButton");
-sensorsButton.addEventListener('click', async () => {
-    return buttonClickHandler(sensorsButton, contactSensorList, deviceStatus => {
+const doorAndWindowButton = document.getElementById("sensorButton");
+doorAndWindowButton.addEventListener('click', async () => {
+    return buttonClickHandler(doorAndWindowButton, contactSensorList, deviceStatus => {
         return statusToHtml(deviceStatus.device,
-            deviceStatus.status.contactSensor, sensorInfo, 6);
+            deviceStatus.status.contactSensor, sensorInfo, DoorsAndWindowIndex);
+    })
+});
+
+//*-----------------------------------------------------------------------------
+//* waterSensor
+//*-----------------------------------------------------------------------------
+function waterSensorInfo(kind, value) {
+    switch (kind) {
+        case 'value': return value || 'offline';
+        case 'valueClass': return 'blue';
+        case 'backgroundClass': return value || 'dry';
+        default: return null;
+    }
+}
+const waterSensorButton = document.getElementById("waterSensorButton");
+waterSensorButton.addEventListener('click', async () => {
+    return buttonClickHandler(waterSensorButton, waterSensorList, deviceStatus => {
+        return statusToHtml(deviceStatus.device,
+            deviceStatus.status.waterSensor, waterSensorInfo, WaterSensorIndex);
     })
 });
 
@@ -328,6 +340,7 @@ sensorsButton.addEventListener('click', async () => {
 //* button click handler common code.
 //*-----------------------------------------------------------------------------
 async function buttonClickHandler(button, idList, makeHtml) {
+    cellIndexList = [];
     if (loadingIgnoreButtons) return;
     let msAtStart = new Date().getTime();
 
