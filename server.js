@@ -1,7 +1,8 @@
-const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk')
-const BackendLib = require('./BackendLib.js');
+const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk');
+
 const express = require("express");
 const app = express();
+
 const PAT = 'd2856d93-cb36-46e2-a49f-c9a4b4b166e9';
 const PORT = 3344;
 const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
@@ -68,6 +69,58 @@ app.get("/", (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
 });
 
+
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/rawdevices", async (request, response) => {
+    console.log(`${getETime()}: /rawdevices called`);
+    let dl = await getDeviceList();
+    console.log(`${getETime()}: getDeviceList returned, response to /rawdevices sent`);
+    response.json(dl);
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/devices", async (request, response) => {
+    let msAtStart = new Date().getTime();
+    await getDeviceList();
+    let ms = new Date().getTime() - msAtStart;
+    console.log(`/devices took ${ms} ms`);
+    response.json(savedDeviceList);
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.post("/setMode", async (request, response) => {
+    let newModeId = request.body.newModeId;
+    console.log(`/setMode call, request.body:`, request.body);
+    console.log(`call modes.setCurrent(${newModeId},${savedLocationId})`);
+    client.modes.setCurrent(newModeId, savedLocationId).then(status => {
+        console.log(`modes.setCurrent returned:`, status);
+        response.json({
+            status: status
+        });
+    });
+});
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+async function getDeviceList() {
+    if (!savedRawDeviceList) {
+        let list = await client.devices.list();
+        if (!savedLocationId) {
+            savedLocationId = list[0].locationId;
+        }
+        savedRawDeviceList = list;
+        savedDeviceList = processDeviceList(list);
+        savedDeviceList.forEach(device => {
+            deviceById[device.deviceId] = device;
+        })
+    }
+    return savedRawDeviceList;
+}
+
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
 function processDeviceList(l) {
@@ -93,46 +146,6 @@ function processDeviceList(l) {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-async function getDeviceList() {
-    if (!savedRawDeviceList) {
-        let list = await client.devices.list();
-        if (!savedLocationId) {
-            savedLocationId = list[0].locationId;
-        }
-        savedRawDeviceList = list;
-        savedDeviceList = processDeviceList(list);
-        savedDeviceList.forEach(device => {
-            deviceById[device.deviceId] = device;
-        })
-    }
-    return savedRawDeviceList;
-}
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-app.get("/rawdevices", async (request, response) => {
-    console.log(`${getETime()}: /rawdevices called`);
-    let dl = await getDeviceList();
-    console.log(`${getETime()}: getDeviceList returned, response to /rawdevices sent`);
-    response.json(dl);
-});
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-app.post("/setMode", async (request, response) => {
-    let newModeId = request.body.newModeId;
-    console.log(`/setMode call, request.body:`, request.body);
-    console.log(`call modes.setCurrent(${newModeId},${savedLocationId})`);
-    client.modes.setCurrent(newModeId, savedLocationId).then(status => {
-        console.log(`modes.setCurrent returned:`, status);
-        response.json({
-            status: status
-        });
-    });
-});
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
 app.post("/getMode", async (request, response) => {
     client.modes.getCurrent(savedLocationId).then(ret => {
         console.log('modes.getCurrent:', ret);
@@ -153,15 +166,6 @@ app.get("/modeList", async (request, response) => {
 });
 
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-app.get("/devices", async (request, response) => {
-    let msAtStart = new Date().getTime();
-    await getDeviceList();
-    let ms = new Date().getTime() - msAtStart;
-    console.log(`/devices took ${ms} ms`);
-    response.json(savedDeviceList);
-});
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -174,19 +178,6 @@ async function getStatus(id) {
     return status;
 }
 
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-// app.get("/sensors", async (request, response) => {
-//     let sensorInfo = [];
-//     for (let i = 0; i < sensorList.length; ++i) {
-//         device = sensorList[i];
-//         let status = await client.devices.getStatus(device.deviceId);
-//         let openClosed = status.components.main.contactSensor.contact.value;
-//         sensorInfo.push([device.label, openClosed]);
-//     }
-//     response.json(sensorInfo);
-// });
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------

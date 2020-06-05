@@ -15,51 +15,7 @@ var otherDevicesList = [];
 var idToDevice = {};
 var idToLabel = {};
 
-//*-----------------------------------------------------------------------------
-//* make names shorter
-//*-----------------------------------------------------------------------------
-var encodeLabelTable = {
-    // Temps
-    'Backyard': 'Backyard',
-    'Front Porch Temp': 'Porch',
-    'Front Screen': 'Front Screen',
-    'Leak Crawl Space': 'Crawl Space',
-    'Shed': 'Shed',
-    // Lights
-    'Lamp Back': 'Back Room',
-    'Lamp Couch': 'Couch',
-    'Lamp Living East': 'Living Window',
-    'Lamp Wyn 1': 'Wynette 1',
-    'Lamp Wyn 2': 'Wynette 2',
-    // Batteries
-    'Leak dishwasher': 'Dishwasher',
-    'Bath Small North': 'Bath Small',
-    'Leak washing machine': 'Washer',
-    'Leak Water Heater': 'Water Heater',
-    'Z-Wave Water Sensor': 'Water Sensor',
-    'Living East Right': 'Living East R',
-    'Living East Left': 'Living East L',
-    'Bath Big East': 'Bath Big',
-    'Back East Right': 'Back East R',
-    'Back East Left': 'Back East L',
-    // Alarms
-    'xxxxx': 'xxxxx',
-    'xxxxx': 'xxxxx',
-    'xxxxx': 'xxxxx',
-    'xxxxx': 'xxxxx',
-}
 
-//*-----------------------------------------------------------------------------
-//* look up names in the above table.
-//*-----------------------------------------------------------------------------
-function encodeLabel(label) {
-    let codedLabel = encodeLabelTable[label];
-    if (codedLabel && codedLabel != label) {
-        // console.log(`${label} --> ${codedLabel}`)
-        return codedLabel;
-    }
-    return label;
-}
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -371,10 +327,6 @@ sensorsButton.addEventListener('click', async () => {
 
 
 //*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-currentTabButton = modeButton;
-
-//*-----------------------------------------------------------------------------
 //* from: https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch
 //*-----------------------------------------------------------------------------
 async function postData(url = '', data = {}) {
@@ -413,15 +365,6 @@ async function postData(url = '', data = {}) {
     return json; // parses JSON response into native JavaScript objects
 }
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-function opensFirst(a, b) {
-    let aSensor = a.status.contactSensor;
-    if (!aSensor) return 0;
-    let bSensor = b.status.contactSensor;
-    if (aSensor == 'open') return bSensor == 'open' ? 0 : -1;
-    return bSensor == 'open' ? 0 : 1;
-} 
 
 //*-----------------------------------------------------------------------------
 //* button click handler common code.
@@ -478,4 +421,62 @@ async function buttonClickHandler(button, idList, makeHtml) {
     button.innerHTML = savedLabel;
     loadingIgnoreButtons = false;
     console.log(`Button click: ${new Date().getTime() - msAtStart} ms`);
+}
+
+
+//*-----------------------------------------------------------------------------
+//* comparison function for sorting
+//*-----------------------------------------------------------------------------
+function opensFirst(a, b) {
+    let aSensor = a.status.contactSensor;
+    if (!aSensor) return 0;
+    let bSensor = b.status.contactSensor;
+    if (aSensor == 'open') return bSensor == 'open' ? 0 : -1;
+    return bSensor == 'open' ? 0 : 1;
+} 
+
+//*-----------------------------------------------------------------------------
+//* look up names in the above table.
+//*-----------------------------------------------------------------------------
+function encodeLabel(label) {
+    let codedLabel = encodeLabelTable[label];
+    if (codedLabel && codedLabel != label) {
+        // console.log(`${label} --> ${codedLabel}`)
+        return codedLabel;
+    }
+    return label;
+}
+
+//*-----------------------------------------------------------------------------
+//* make names shorter
+//*-----------------------------------------------------------------------------
+var encodeLabelTable = {
+    // Temps
+    'Backyard': 'Backyard',
+    'Front Porch Temp': 'Porch',
+    'Front Screen': 'Front Screen',
+    'Leak Crawl Space': 'Crawl Space',
+    'Shed': 'Shed',
+    // Lights
+    'Lamp Back': 'Back Room',
+    'Lamp Couch': 'Couch',
+    'Lamp Living East': 'Living Window',
+    'Lamp Wyn 1': 'Wynette 1',
+    'Lamp Wyn 2': 'Wynette 2',
+    // Batteries
+    'Leak dishwasher': 'Dishwasher',
+    'Bath Small North': 'Bath Small',
+    'Leak washing machine': 'Washer',
+    'Leak Water Heater': 'Water Heater',
+    'Z-Wave Water Sensor': 'Water Sensor',
+    'Living East Right': 'Living East R',
+    'Living East Left': 'Living East L',
+    'Bath Big East': 'Bath Big',
+    'Back East Right': 'Back East R',
+    'Back East Left': 'Back East L',
+    // Alarms
+    'xxxxx': 'xxxxx',
+    'xxxxx': 'xxxxx',
+    'xxxxx': 'xxxxx',
+    'xxxxx': 'xxxxx',
 }
