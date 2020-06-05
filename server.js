@@ -1,12 +1,20 @@
 const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk');
 
 const express = require("express");
+const path = require('path');
+const auth = require('http-auth');
+
 const app = express();
 
 const PORT = 3000;
 // const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 const client = new SmartThingsClient(new BearerTokenAuthenticator(process.env.PAT))
 var savedLocationId = null;
+
+const basic = auth.basic({
+    file: path.join(__dirname, './users.htpasswd'),
+});
+
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -64,7 +72,7 @@ app.post("/command", (request, response) => {
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
-app.get("/", (request, response) => {
+app.get("/", auth.connect(basic), (request, response) => {
     response.sendFile(__dirname + "/views/index.html");
 });
 
