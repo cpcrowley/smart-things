@@ -183,7 +183,6 @@ ${kindInfo('value', value, device)}</span>
 function statusToHtml(device, value, kindInfo, kindIndex) {
     let cellIndex = cellIndexList.length;
     cellIndexList.push(device.deviceId);
-    // console.log(`statusToHtml: cellIndex: ${cellIndex} deviceId: ${device.deviceId} device, cellIndexList:`, device, cellIndexList);
     let ret = `
 <div id="cell${cellIndex}" class="col deviceCell"
 onclick="onClick(${kindIndex},${cellIndex});">
@@ -208,7 +207,7 @@ async function onClick(kindIndex, cellIndex) {
     } else {
         devicesInfoList = await postData('/statuses', { idList: [device] });
         statusInfo = devicesInfoList[0];
-    }
+    } 
 
     let innerHTML, args, currentStatus, toggledStatus;
 
