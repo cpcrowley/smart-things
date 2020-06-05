@@ -1,5 +1,4 @@
 //*-----------------------------------------------------------------------------
-//* Do initial setup
 //*-----------------------------------------------------------------------------
 const rowOfDevices = document.getElementById("rowOfDevices");
 var deviceList = [];
@@ -14,13 +13,9 @@ var alarmList = [];
 var otherDevicesList = [];
 var idToDevice = {};
 var idToLabel = {};
-
-
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
 var currentTabButton;
 let loadingIgnoreButtons = false;
+let cellIndexList = [];
 
 //*-----------------------------------------------------------------------------
 //* Fetch the device list
@@ -99,28 +94,8 @@ fetch('/devices').then(response => {
     console.log('****** fetch call then block ERROR', error);
 });
 
-let cellIndexList = [];
 
 
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-//* Format of "deviceList", "tempList", etc List of these items:
-//* postData(data): data: { idList: array of items like deviceListItem }
-var deviceListItem = {
-    capIdList: ["battery", "contactSensor", "configuration", "sensor"],
-    deviceId: "1399abd4-736d-4f6f-b565-68bf6ed04907",
-    label: "Front Door",
-    name: "Z-Wave Door/Window Sensor",
-}
-//***** return from postData: List of items like this
-var postDataReturnItem = {
-    device: deviceListItem,
-    status: {
-        battery: 50,
-        contactSensor: "closed",
-        temp: "93&deg;F",
-    }
-}
 
 //*-----------------------------------------------------------------------------
 //*----------------------------------------- -----------------------------------
@@ -445,6 +420,26 @@ function encodeLabel(label) {
         return codedLabel;
     }
     return label;
+}
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+//* Format of "deviceList", "tempList", etc List of these items:
+//* postData(data): data: { idList: array of items like deviceListItem }
+var deviceListItem = {
+    capIdList: ["battery", "contactSensor", "configuration", "sensor"],
+    deviceId: "1399abd4-736d-4f6f-b565-68bf6ed04907",
+    label: "Front Door",
+    name: "Z-Wave Door/Window Sensor",
+}
+//***** return from postData: List of items like this
+var postDataReturnItem = {
+    device: deviceListItem,
+    status: {
+        battery: 50,
+        contactSensor: "closed",
+        temp: "93&deg;F",
+    }
 }
 
 //*-----------------------------------------------------------------------------
