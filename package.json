@@ -16,7 +16,7 @@
     "@smartthings/core-sdk": "^0.2.11",
     "body-parser": "^1.19.0",
     "express": "^4.17.1",
-    "http-auth": "^4.1.2"
+    "express-basic-auth": "^1.2.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.4"

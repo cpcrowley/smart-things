@@ -1,8 +1,7 @@
 const { SmartThingsClient, BearerTokenAuthenticator } = require('@smartthings/core-sdk');
 
 const express = require("express");
-const path = require('path');
-const auth = require('http-auth');
+const basicAuth = require('express-basic-auth')
 
 const app = express();
 
@@ -10,11 +9,6 @@ const PORT = 3000;
 // const client = new SmartThingsClient(new BearerTokenAuthenticator(PAT))
 const client = new SmartThingsClient(new BearerTokenAuthenticator(process.env.PAT))
 var savedLocationId = null;
-
-const basic = auth.basic({
-    file: path.join(__dirname, './users.htpasswd'),
-});
-
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -26,9 +20,29 @@ var deviceById = {};
 //*-----------------------------------------------------------------------------
 // make all the files in 'public' available
 app.use(express.static("public"));
+
 var bodyParser = require('body-parser');
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
+
+app.use(basicAuth({
+    users: {
+        'wynette': 'process.env.PW_WYNETTE',
+    },
+    challenge: true,
+    realm: 'foo',
+}));
+
+/*
+http://wynette:supersecret@localhost:3000/
+http://localhost:3000/#
+*/
+
+//*-----------------------------------------------------------------------------
+//*-----------------------------------------------------------------------------
+app.get("/", (request, response) => {
+    response.sendFile(__dirname + "/views/index.html");
+});
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -69,14 +83,6 @@ app.post("/command", (request, response) => {
         });
     }
 });
-
-//*-----------------------------------------------------------------------------
-//*-----------------------------------------------------------------------------
-app.get("/", auth.connect(basic), (request, response) => {
-    response.sendFile(__dirname + "/views/index.html");
-});
-
-
 
 //*-----------------------------------------------------------------------------
 //*-----------------------------------------------------------------------------
@@ -155,7 +161,7 @@ function processDeviceList(l) {
 //*-----------------------------------------------------------------------------
 app.post("/getMode", async (request, response) => {
     client.modes.getCurrent(savedLocationId).then(ret => {
-        console.log('modes.getCurrent:', ret);
+        // console.log('modes.getCurrent:', ret);
         response.json({
             mode: ret.label
         });
